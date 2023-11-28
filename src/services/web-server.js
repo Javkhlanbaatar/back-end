@@ -16,16 +16,8 @@ const port = process.env.PORT;
 //const indexRoute = require('./routes/index.Route');
 const loginRoute = require('../routes/login.Route');
 const usersRoute = require('../routes/users.Route');
-const pollsRoute = require('../routes/polls.Route');
-const poll_answerRoute = require('../routes/poll_answer.Route');
-const poll_attendanceRoute = require('../routes/poll_attendance.Route');
-const commentsRoute = require('../routes/comments.Route');
 //db table add 
 const Users = require('../models/users')
-const Poll = require('../models/polls')
-const Poll_Answer =require('../models/poll_answer')
-const Poll_Attendances = require('../models/poll_attendance')
-const Comments = require('../models/comments')
 const Upload = require('../models/upload');
 const ChatMessage = require('../models/chatMessage');
 const allChat = require('../models/chats');
@@ -61,20 +53,12 @@ function initialize() {
   
   const loginRoute = require('../routes/login.Route');
   const usersRoute = require('../routes/users.Route');
-  const pollsRoute = require('../routes/polls.Route');
-  const poll_answerRoute = require('../routes/poll_answer.Route');
-  const poll_attendanceRoute = require('../routes/poll_attendance.Route');
-  const commentsRoute = require('../routes/comments.Route');
   const uploadRoute = require('../routes/upload.Route');
   const socketRoute = require('../routes/socket.Route');
 
 
   app.use('/auth', loginRoute);
   app.use('/user', usersRoute);
-  app.use('/poll', pollsRoute);
-  app.use('/answers', poll_answerRoute);
-  app.use('/attendance', poll_attendanceRoute);
-  app.use('/comment', commentsRoute);
   app.use('/image',uploadRoute );
   app.use('/uploads', express.static(path.join(__dirname, '../src/upload'))); // Serve static files from the 'src/upload' folder
   app.use('/socket',socketRoute);
@@ -86,11 +70,7 @@ function initialize() {
   app.use("/public", express.static("public"));
 
   Users.sync()
-  .then(() => Poll.sync())
   .then(() => Upload.sync())
-  .then(() => Poll_Answer.sync())
-  .then(() => Poll_Attendances.sync())
-  .then(() => Comments.sync())
   .then(() => {ChatMessage.sync();
               allChat.sync();});
   app.listen(process.env.PORT, function () {
