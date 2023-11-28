@@ -1,21 +1,19 @@
-const { Pool } = require("pg");
-const { Sequelize, DataTypes, Op } = require("sequelize");
+const { Sequelize, DataTypes } = require("sequelize");
+const { createPool } = require("mysql2/promise"); // Updated import statement
+const moment = require('moment');
+
 let pool;
+
 const sequelize = new Sequelize(
-  process.env.PG_DB,
-  process.env.PG_USER,
-  process.env.PG_PASSWORD,
-
+  process.env.MQ_DB,
+  process.env.MQ_USER,
+  process.env.MQ_PASSWORD,
   {
-    host: process.env.PG_HOST,
-    dialect: "postgres",
+    host: process.env.MQ_HOST,
+    dialect: "mysql",
     query: { raw: true },
-    dialectOptions: {
-      requestTimeout: 3000,
-      useUTC: false,
-    },
-    timezone: "+08:00",
 
+    timezone: "+08:00",
     pool: {
       max: 30,
       min: 0,
@@ -29,16 +27,26 @@ const sequelize = new Sequelize(
 async function initialize() {
   console.log("connecting to db...");
 
-  pool = new Pool({
-    host: process.env.PG_HOST,
-    port: process.env.PG_PORT,
-    database: process.env.PG_DB,
-    user: process.env.PG_USER,
-    password: process.env.PG_PASSWORD,
+  pool = createPool({
+    host: process.env.MQ_HOST,
+    port: process.env.MQ_PORT,
+    database: process.env.MQ_DB,
+    user: process.env.MQ_USER,
+    password: process.env.MQ_PASSWORD,
   });
 
-  //console.log(pool)
+  try {
+    // Test the connection
+    const connection = await pool.getConnection();
+    console.log("Connected to the database!");
+    connection.release();
+  } catch (error) {
+    console.error("Error connecting to the database:", error);
+  }
 }
+
+// Rest of your code...
+
 
 async function close() {
   console.log("db closing...");
@@ -48,3 +56,4 @@ module.exports = sequelize;
 
 module.exports.initialize = initialize;
 module.exports.close = close;
+

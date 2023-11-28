@@ -57,6 +57,7 @@ function initialize() {
   );
   app.use(cors());
   app.use(express.json());
+
   
   const loginRoute = require('../routes/login.Route');
   const usersRoute = require('../routes/users.Route');
