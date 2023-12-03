@@ -1,23 +1,23 @@
 {
   "development": {
-    "username": "postgres",
-    "password": "1234",
-    "database": "Polls",
+    "username": "root",
+    "password": "12345678",
+    "database": "web",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "mysql"
   },
   "test": {
-    "username": "postgres",
-    "password": "1234",
-    "database": "Polls",
+    "username": "root",
+    "password": "12345678",
+    "database": "web",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "mysql"
   },
   "production": {
-    "username": "postgres",
-    "password": "1234",
-    "database": "Polls",
+    "username": "root",
+    "password": "12345678",
+    "database": "web",
     "host": "127.0.0.1",
-    "dialect": "postgres"
+    "dialect": "mysql"
   }
 }
