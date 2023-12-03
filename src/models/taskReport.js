@@ -1,28 +1,38 @@
 const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const moment = require('moment');
-const Users = require('./users');
+const Task = require('./task');
+const Blog = require('./blog')
+class TaskReport extends Model {}
 
-class GroupMember extends Model {}
-
-GroupMember.init(
+TaskReport.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    userid: {
+    task_taskId: {
       type: DataTypes.INTEGER,
       references: {
-        model: Users,
+        model: Task,
         key: 'id'
       },
     },
-    role: {
-      type: DataTypes.INTEGER,
+    blog_blogId: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: Blog,
+          key: 'id'
+        },
     },
-    entertime: {
+    reply: {
+      type: DataTypes.STRING,
+    },
+    grade: {
+      type: DataTypes.FLOAT,
+    },
+    sentDate: {
       type: DataTypes.DATE,
     },
     createdAt: {
@@ -39,17 +49,23 @@ GroupMember.init(
   },
   {
     sequelize: db,
-    modelName: 'groupmember',
-    tableName: 'groupmember', 
+    modelName: 'taskreport',
+    tableName: 'taskreport', 
         freezeTableName: true,
   }
 );
 
-GroupMember.belongsTo(Users, {
-  foreignKey: 'userid',
+TaskReport.belongsTo(Task, {
+  foreignKey: 'task_taskId',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',
 });
-
-module.exports = GroupMember;
+TaskReport.belongsTo(Blog, {
+    foreignKey: 'blog_blogId',
+    targetKey: 'id',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  });
+  
+module.exports = TaskReport;

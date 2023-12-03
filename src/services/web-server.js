@@ -22,6 +22,13 @@ const Upload = require('../models/upload');
 const ChatMessage = require('../models/chatMessage');
 const allChat = require('../models/chats');
 
+const friend = require('../models/friend');
+const group = require('../models/group');
+const groupmember = require('../models/groupMember');
+const blog = require('../models/blog');
+const task = require('../models/task');
+const taskreport = require('../models/taskReport');
+
 // const scheduler = require("./scheduler"); // устгаж болохгүй!!!
 //uuganaaa
 function initialize() {
@@ -71,8 +78,9 @@ function initialize() {
 
   Users.sync()
   .then(() => Upload.sync())
-  .then(() => {ChatMessage.sync();
-              allChat.sync();});
+  .then(() => {ChatMessage.sync();friend.sync()});
+  group.sync().then(() => {groupmember.sync(); task.sync();})
+  .then(() => blog.sync()).then(() => taskreport.sync());
   app.listen(process.env.PORT, function () {
     console.log("Server is ready at" + process.env.PORT);
   });

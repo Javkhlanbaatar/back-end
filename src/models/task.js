@@ -1,28 +1,31 @@
 const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const moment = require('moment');
-const Users = require('./users');
+const Group = require('./group');
 
-class GroupMember extends Model {}
+class Task extends Model {}
 
-GroupMember.init(
+Task.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    userid: {
+    group_groupId: {
       type: DataTypes.INTEGER,
       references: {
-        model: Users,
+        model: Group,
         key: 'id'
       },
     },
-    role: {
-      type: DataTypes.INTEGER,
+    description: {
+      type: DataTypes.STRING,
     },
-    entertime: {
+    starttime: {
+      type: DataTypes.DATE,
+    },
+    endtime: {
       type: DataTypes.DATE,
     },
     createdAt: {
@@ -39,17 +42,17 @@ GroupMember.init(
   },
   {
     sequelize: db,
-    modelName: 'groupmember',
-    tableName: 'groupmember', 
+    modelName: 'task',
+    tableName: 'task', 
         freezeTableName: true,
   }
 );
 
-GroupMember.belongsTo(Users, {
-  foreignKey: 'userid',
+Task.belongsTo(Group, {
+  foreignKey: 'group_groupId',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',
 });
 
-module.exports = GroupMember;
+module.exports = Task;
