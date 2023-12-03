@@ -20,6 +20,9 @@ Group.init(
     description: {
       type: DataTypes.STRING,
     },
+    status: {
+      type: DataTypes.INTEGER,
+    },
     createdAt: {
       type: DataTypes.DATE,
       get() {

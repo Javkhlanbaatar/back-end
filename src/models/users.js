@@ -27,16 +27,19 @@ Users.init(
       type: DataTypes.STRING,
       unique: true,
     },
+    phonenumber: {
+      type: DataTypes.STRING
+    },
     password: {
       type: DataTypes.STRING,
-    },
-    verified:{
-      type:DataTypes.BOOLEAN,
-      defaultValue:false,
     },
     role: {
       type: DataTypes.STRING,
       defaultValue: "User",
+    },
+    friendCount: {
+      type: DataTypes.INTEGER,
+      defaultValue:0
     },
     createdAt: {
       type: DataTypes.DATE,

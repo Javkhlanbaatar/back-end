@@ -2,7 +2,7 @@ const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const moment = require('moment');
 const Users = require('./users');
-
+const Group = require('./group');
 class GroupMember extends Model {}
 
 GroupMember.init(
@@ -19,11 +19,23 @@ GroupMember.init(
         key: 'id'
       },
     },
+    groupid: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Group,
+        key: 'id'
+      },
+    },
     role: {
       type: DataTypes.INTEGER,
     },
     entertime: {
       type: DataTypes.DATE,
+      get() {
+        return moment(this.getDataValue("createdAt")).format(
+          "YYYY/MM/DD HH:mm"
+        );
+      },
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -47,6 +59,12 @@ GroupMember.init(
 
 GroupMember.belongsTo(Users, {
   foreignKey: 'userid',
+  targetKey: 'id',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE',
+});
+GroupMember.belongsTo(Group, {
+  foreignKey: 'groupid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',

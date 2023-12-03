@@ -28,6 +28,9 @@ Blog.init(
     title: {
       type: DataTypes.STRING,
     },
+    likeCount: {
+      type: DataTypes.INTEGER
+    },
     createdAt: {
       type: DataTypes.DATE,
       get() {

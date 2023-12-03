@@ -61,11 +61,14 @@ function initialize() {
   const usersRoute = require('../routes/users.Route');
   const uploadRoute = require('../routes/upload.Route');
   const socketRoute = require('../routes/socket.Route');
-
-
+  const blogRoute = require('../routes/blog.Route');
+  const groupRoute = require('../routes/group.Route');
+  
   app.use('/auth', loginRoute);
   app.use('/user', usersRoute);
   app.use('/image',uploadRoute );
+  app.use('/blog', blogRoute);
+  app.use('/group', groupRoute);
   app.use('/uploads', express.static(path.join(__dirname, '../src/upload'))); // Serve static files from the 'src/upload' folder
   app.use('/socket',socketRoute);
   app.get('/', (req, res) => {
