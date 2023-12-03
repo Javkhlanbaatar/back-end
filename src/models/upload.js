@@ -1,7 +1,7 @@
 const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const moment = require('moment');
-const Users = require('./users');
+const Blog = require('./blog');
 
 class Upload extends Model {}
 
@@ -12,10 +12,10 @@ Upload.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    userid: {
+    blog_blogId: {
       type: DataTypes.INTEGER,
       references: {
-        model: Users,
+        model: Blog,
         key: 'id'
       },
     },
@@ -51,8 +51,8 @@ Upload.init(
   }
 );
 
-Upload.belongsTo(Users, {
-  foreignKey: 'userid',
+Upload.belongsTo(Blog, {
+  foreignKey: 'blog_blogId',
   targedKey:'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',

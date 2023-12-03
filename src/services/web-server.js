@@ -20,7 +20,6 @@ const usersRoute = require('../routes/users.Route');
 const Users = require('../models/users')
 const Upload = require('../models/upload');
 const ChatMessage = require('../models/chatMessage');
-const allChat = require('../models/chats');
 
 const friend = require('../models/friend');
 const group = require('../models/group');
@@ -77,10 +76,10 @@ function initialize() {
   app.use("/public", express.static("public"));
 
   Users.sync()
-  .then(() => Upload.sync())
   .then(() => {ChatMessage.sync();friend.sync()});
   group.sync().then(() => {groupmember.sync(); task.sync();})
-  .then(() => blog.sync()).then(() => taskreport.sync());
+  .then(() => blog.sync()).then(() => taskreport.sync())
+  .then(() => Upload.sync());
   app.listen(process.env.PORT, function () {
     console.log("Server is ready at" + process.env.PORT);
   });
