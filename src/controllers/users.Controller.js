@@ -9,7 +9,7 @@ const path = require("path");
 const { raw } = require("body-parser");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
-  const { username,firstname, lastname, email,phonenumber,password, } = req.body;
+  const { username, firstname, lastname, email, phonenumber, password, } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({
@@ -58,7 +58,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
         expiresIn: process.env.JWT_EXPIRESIN,
       }
     );
-    
+
     // const verificationUrl = `http://localhost:8001/auth/verify/${token}`;
 
     // let transporter = nodemailer.createTransport({
@@ -240,20 +240,27 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
-  const { username,firstname, lastname, email,phonenumber, } = req.body;
-    const updatedUser = { 
-      username:username, 
-      firstname: firstname, 
-      lastname:lastname, 
-      email:email, 
-      phonenumber:phonenumber
-    }
+  const { username, firstname, lastname, email, phonenumber } = req.body;
+
+  // Formdata image-ийг Firebase-д хадгалаад URL-ийг нь авна
+  const imageUrl = "";
+
+  const updatedUser = {
+    username: username,
+    firstname: firstname,
+    lastname: lastname,
+    email: email,
+    phonenumber: phonenumber,
+    image: imageUrl
+  }
   await users.update(updatedUser,
-    { where: {
+    {
+      where: {
         id: id
-    }}
+      }
+    }
   );
-   res.status(200).json("User info edited");
+  res.status(200).json("User info edited");
 });
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
@@ -280,7 +287,7 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
   }
 });
 
-exports.findUser = asyncHandler(async (req,res,next)=>{
+exports.findUser = asyncHandler(async (req, res, next) => {
   const name = req.params.searchname;
   const existingUsers = await users.findAll({
     where: {
@@ -298,6 +305,6 @@ exports.findUser = asyncHandler(async (req,res,next)=>{
   // 
 });
 
-exports.addFriend = asyncHandler(async (req,res,next)=>{
+exports.addFriend = asyncHandler(async (req, res, next) => {
 
 });

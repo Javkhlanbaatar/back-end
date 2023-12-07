@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("./asyncHandler");
 const morgan = require("morgan");
-const logger = morgan("combined");
 
 exports.protect = asyncHandler(async (req, res, next) => {
   console.log(req.headers.authorization);

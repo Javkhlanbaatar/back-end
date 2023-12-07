@@ -19,13 +19,16 @@ Blog.init(
         key: 'id'
       },
     },
+    title: {
+      type: DataTypes.STRING,
+    },
     description: {
       type: DataTypes.STRING,
     },
     status: {
       type: DataTypes.INTEGER,
     },
-    title: {
+    image: {
       type: DataTypes.STRING,
     },
     likeCount: {

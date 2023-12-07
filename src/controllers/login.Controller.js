@@ -19,7 +19,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
   const user = await Users.findOne({
     where: {
-      [Sequelize.Op.or]: [
+      [Op.or]: [
         { email: email },
         { username: email },
       ],
@@ -59,6 +59,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Амжилттай нэвтэрлээ",
+      userid: user.id,
       token,
     });
   } else {

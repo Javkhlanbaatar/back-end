@@ -7,11 +7,15 @@ const users = require("../models/users");
 exports.createBlog = asyncHandler(async (req, res, next) => {
     const userid = req.userid;
     const {description, title, status} = req.body;
+
+    const imageUrl = "";
+
     const new_blog = await blog.create({
         userid: userid,
+        title: title,
         description: description,
         status: status,
-        title: title,
+        image: imageUrl,
         likeCount: 0,
     });
     if(new_blog){

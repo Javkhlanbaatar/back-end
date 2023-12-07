@@ -33,6 +33,9 @@ Users.init(
     password: {
       type: DataTypes.STRING,
     },
+    image: {
+      type: DataTypes.STRING
+    },
     role: {
       type: DataTypes.STRING,
       defaultValue: "User",

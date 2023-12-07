@@ -27,9 +27,9 @@ const groupmember = require('../models/groupMember');
 const blog = require('../models/blog');
 const task = require('../models/task');
 const taskreport = require('../models/taskReport');
+const blogfiles = require("../models/blogFiles");
 
 // const scheduler = require("./scheduler"); // устгаж болохгүй!!!
-//uuganaaa
 function initialize() {
   const app = express();
   app.use(morgan("dev"));
@@ -82,7 +82,7 @@ function initialize() {
   .then(() => {ChatMessage.sync();friend.sync()});
   group.sync().then(() => {groupmember.sync(); task.sync();})
   .then(() => blog.sync()).then(() => taskreport.sync())
-  .then(() => Upload.sync());
+  .then(() => Upload.sync()).then(() => blogfiles.sync());
   app.listen(process.env.PORT, function () {
     console.log("Server is ready at" + process.env.PORT);
   });
