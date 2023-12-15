@@ -6,6 +6,7 @@ const groupMember = require("../models/groupMember");
 const users = require("../models/users");
 const GroupPoster = require("../models/groupPoster");
 const Task = require("../models/task");
+const Users = require("../models/users");
 exports.createGroup = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { name, description, status } = req.body;
@@ -118,6 +119,7 @@ exports.getGroup = asyncHandler(async (req, res, next) => {
     }
   })
   group_group.poster = poster;
+
   const groupMembers = await groupMember.findAll({
     // in every group, the first member id of the group is always admin
     where: {
@@ -131,9 +133,17 @@ exports.getGroup = asyncHandler(async (req, res, next) => {
         id: groupMembers[i].userid
       }
     });
-    memberList.push(user)
+    memberList.push({...user, role: groupMembers[i].role})
   }
-  group_group.memberList = memberList
+  group_group.members = memberList;
+
+  const tasks = await Task.findAll({
+    where: {
+      groupid: group_group.id
+    }
+  })
+  group_group.tasks = tasks;
+
   return res.status(200).json({
     data: group_group,
     success: true,
