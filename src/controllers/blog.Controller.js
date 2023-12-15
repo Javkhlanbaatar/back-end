@@ -73,12 +73,23 @@ exports.createBlogFile = asyncHandler(async (req, res, next) => {
 });
 
 exports.getBlogs = asyncHandler(async (req, res, next) => {
-  //method for admin that gets every users
-  const blogList = await blog
-    .findAll({
-      order: [["id", "DESC"]],
-    })
-  const shortBlogs = []
+  const { userid } = req.body;
+  let blogList = [];
+  if (userid) {
+    blogList = await blog
+      .findAll({
+        where: {
+          userid: userid
+        },
+        order: [["id", "DESC"]],
+      })
+  } else {
+    blogList = await blog
+      .findAll({
+        order: [["id", "DESC"]],
+      })
+  }
+  const blogs = []
   for (let j in blogList) {
     const user = await users.findOne({
       where: {
@@ -96,10 +107,10 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
       lastname: user.lastname,
       poster
     }
-    shortBlogs.push(iterativeBlog)
+    blogs.push(iterativeBlog)
   }
   return res.status(200).json({
-    data: shortBlogs,
+    data: blogs,
     message: "Blog list",
   });
 });
@@ -165,11 +176,11 @@ exports.editBlog = asyncHandler(async (req, res, next) => {
       filesize: poster.size,
       filelink: poster.link
     },
-    {
-      where: {
-        blogid: id
+      {
+        where: {
+          blogid: id
+        }
       }
-    }
     );
   }
   if (files) {

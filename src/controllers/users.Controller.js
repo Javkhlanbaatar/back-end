@@ -1,11 +1,10 @@
-const jwt = require("jsonwebtoken");
-
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const asyncHandler = require("../middleware/asyncHandler");
 const users = require("../models/users");
 const blogs = require("../models/blog");
 const UserProfile = require("../models/userProfile");
+const BlogPoster = require("../models/blogPoster");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
   const { username, firstname, lastname, email, phonenumber, password, } = req.body;
@@ -103,6 +102,18 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     }
   });
 
+  const blog_blogs = [];
+
+  for (item of blog) {
+    const blog_poster = await BlogPoster.findOne({
+      where: {
+        blogid: item.id
+      }
+    })
+    item.poster = blog_poster;
+    blog_blogs.push(item);
+  }
+
   const profile = await UserProfile.findOne({
     where: {
       userid: user.id
@@ -115,7 +126,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
       ...user,
       image: profile?.filelink
     },
-    blogs: blog
+    blogs: blog_blogs
   });
 });
 
@@ -183,7 +194,7 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.findUser = asyncHandler(async (req, res, next) => {
-  const {name} = req.body;
+  const { name } = req.body;
   const existingUsers = await users.findAll({
     where: {
       [Op.or]: [

@@ -31,7 +31,7 @@ Blog.init(
       type: DataTypes.STRING,
     },
     description: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(4096),
     },
     status: {
       type: DataTypes.INTEGER,

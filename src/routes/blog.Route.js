@@ -7,7 +7,7 @@ router.route("/poster").post(protect, createBlogPoster);
 router.route("/file").post(protect, createBlogFile);
 router.route("/").get(getBlogs);
 router.route("/:id").get(getBlog);
-router.route("/find").get(findBlog);
+router.route("/find").get(protect, findBlog);
 router.route("/:id").delete(protect, deleteBlog);
 router.route("/:id").put(protect, editBlog);
 module.exports = router;
