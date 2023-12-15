@@ -75,15 +75,17 @@ exports.createPoster = asyncHandler(async (req, res, next) => {
 
 exports.getGroups = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const groupId = await groupMember.findAll({
+  const groups = await groupMember.findAll({
     where: {
-      id: userid
+      userid: userid
     },
   });
   let grouplist = [];
-  for (item in groupId) {
+  for (item of groups) {
     const onegroup = await group.findOne({
-      where: item.groupid
+      where: {
+        id: item.groupid
+      }
     });
     const tasks = await Task.findAll({
       where: {
