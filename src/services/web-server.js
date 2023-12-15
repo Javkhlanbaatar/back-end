@@ -7,27 +7,18 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT;
 
-// // Set up view engine
-// app.set('view engine', 'ejs');
-// app.set('views', './src/views');
-
-//copy code from this github if it's necessary https://github.com/bradtraversy/chatcord
-
-//const indexRoute = require('./routes/index.Route');
-const loginRoute = require('../routes/login.Route');
-const usersRoute = require('../routes/users.Route');
 //db table add 
 const Users = require('../models/users')
-const Upload = require('../models/upload');
 const ChatMessage = require('../models/chatMessage');
-
 const friend = require('../models/friend');
 const group = require('../models/group');
 const groupmember = require('../models/groupMember');
 const blog = require('../models/blog');
 const task = require('../models/task');
-const taskreport = require('../models/taskReport');
 const blogfiles = require("../models/blogFiles");
+const userprofile = require("../models/userProfile");
+const BlogPoster = require("../models/blogPoster");
+const GroupPoster = require("../models/groupPoster");
 
 // const scheduler = require("./scheduler"); // устгаж болохгүй!!!
 function initialize() {
@@ -81,8 +72,9 @@ function initialize() {
   Users.sync()
   .then(() => {ChatMessage.sync();friend.sync()});
   group.sync().then(() => {groupmember.sync(); task.sync();})
-  .then(() => blog.sync()).then(() => taskreport.sync())
-  .then(() => Upload.sync()).then(() => blogfiles.sync());
+  .then(() => blog.sync()).then(() => blogfiles.sync())
+  .then(() => BlogPoster.sync()).then(() => userprofile.sync()
+  .then(() => GroupPoster.sync()));
   app.listen(process.env.PORT, function () {
     console.log("Server is ready at" + process.env.PORT);
   });

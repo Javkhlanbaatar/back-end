@@ -1,7 +1,6 @@
 const router = require("express").Router();
 const { uploadProfile, displayImage, registerUploadProfile, getOwnProfile} = require("../controllers/upload.Controller");
 const { protect } = require("../middleware/protect");
-const { route } = require("./users.Route");
 
 const { deleteProfile, updateProfile,displayWithUsername, setDefaultProfilePicture } = require("../controllers/upload.Controller");
 

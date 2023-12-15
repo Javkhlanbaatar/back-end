@@ -2,11 +2,10 @@ const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const moment = require('moment');
 const Users = require('./users');
-const Task = require("./task");
 
-class Blog extends Model {}
+class UserProfile extends Model {}
 
-Blog.init(
+UserProfile.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -20,24 +19,14 @@ Blog.init(
         key: 'id'
       },
     },
-    taskid: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: Task,
-        key: 'id'
-      },
+    filename: {
+      type: DataTypes.STRING
     },
-    title: {
-      type: DataTypes.STRING,
-    },
-    description: {
-      type: DataTypes.STRING,
-    },
-    status: {
-      type: DataTypes.INTEGER,
-    },
-    likeCount: {
+    filesize: {
       type: DataTypes.INTEGER
+    },
+    filelink: {
+      type: DataTypes.STRING
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -47,29 +36,20 @@ Blog.init(
         );
       },
     },
-    updatedAt: {
-      type: DataTypes.DATE,
-    },
   },
   {
     sequelize: db,
-    modelName: 'blog',
-    tableName: 'blog', 
+    modelName: 'userprofile',
+    tableName: 'userprofile', 
         freezeTableName: true,
   }
 );
 
-Blog.belongsTo(Users, {
+UserProfile.belongsTo(Users, {
   foreignKey: 'userid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',
 });
-Blog.belongsTo(Task, {
-  foreignKey: 'taskid',
-  targetKey: 'id',
-  onDelete: 'CASCADE',
-  onUpdate: 'CASCADE',
-});
 
-module.exports = Blog;
+module.exports = UserProfile;

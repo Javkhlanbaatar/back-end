@@ -1,10 +1,11 @@
 const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const Blogs = require('./blog');
+const moment = require("moment");
 
-class BlogFiles extends Model {}
+class BlogPoster extends Model {}
 
-BlogFiles.init(
+BlogPoster.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -41,17 +42,17 @@ BlogFiles.init(
   },
   {
     sequelize: db,
-    modelName: 'blogfiles',
-    tableName: 'blogfiles', 
+    modelName: 'blogposter',
+    tableName: 'blogposter', 
         freezeTableName: true,
   }
 );
 
-BlogFiles.belongsTo(Blogs, {
+BlogPoster.belongsTo(Blogs, {
   foreignKey: 'blogid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',
 });
 
-module.exports = BlogFiles;
+module.exports = BlogPoster;

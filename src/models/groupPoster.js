@@ -1,20 +1,21 @@
 const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
-const Blogs = require('./blog');
+const moment = require("moment");
+const Group = require("./group");
 
-class BlogFiles extends Model {}
+class GroupPoster extends Model {}
 
-BlogFiles.init(
+GroupPoster.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    blogid: {
+    groupid: {
       type: DataTypes.INTEGER,
       references: {
-        model: Blogs,
+        model: Group,
         key: 'id'
       },
     },
@@ -41,17 +42,17 @@ BlogFiles.init(
   },
   {
     sequelize: db,
-    modelName: 'blogfiles',
-    tableName: 'blogfiles', 
+    modelName: 'groupposter',
+    tableName: 'groupposter', 
         freezeTableName: true,
   }
 );
 
-BlogFiles.belongsTo(Blogs, {
-  foreignKey: 'blogid',
+GroupPoster.belongsTo(Group, {
+  foreignKey: 'groupid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',
 });
 
-module.exports = BlogFiles;
+module.exports = GroupPoster;

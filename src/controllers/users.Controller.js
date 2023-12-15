@@ -1,12 +1,11 @@
 const jwt = require("jsonwebtoken");
 
-const { Op, QueryTypes } = require("sequelize");
+const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const asyncHandler = require("../middleware/asyncHandler");
 const users = require("../models/users");
-const fs = require("fs");
-const path = require("path");
-const { raw } = require("body-parser");
+const blogs = require("../models/blog");
+const UserProfile = require("../models/userProfile");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
   const { username, firstname, lastname, email, phonenumber, password, } = req.body;
@@ -45,96 +44,11 @@ exports.createUser = asyncHandler(async (req, res, next) => {
       email: email,
       password: encryptedPassword,
       phonenumber: phonenumber,
-    });
+    }).then(console.log(`User created`));
+    await UserProfile.create({
+      userid: newUser.dataValues.id,
+    }).then(console.log("User profile created"))
 
-    const token = jwt.sign(
-      {
-        email: newUser.email,
-        username: newUser.username,
-        userid: newUser.userid,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRESIN,
-      }
-    );
-
-    // const verificationUrl = `http://localhost:8001/auth/verify/${token}`;
-
-    // let transporter = nodemailer.createTransport({
-    //   host: "smtp.gmail.com",
-    //   port: 465,
-    //   secure: true,
-    //   auth: {
-    //     user: process.env.MY_GMAIL,
-    //     pass: process.env.MY_PASSWORD,
-    //   },
-    // });
-
-    // let info = await transporter.sendMail({
-    //   from: process.env.MY_GMAIL,
-    //   to: newUser.email,
-    //   subject: "Бүртгүүлсэн хаягаа баталгаажуулах нь",
-    //   html: `
-    //     <!DOCTYPE html>
-    //     <html>
-    //       <head>
-    //         <meta charset="UTF-8">
-    //         <title>Email Verification</title>
-    //         <style>
-    //           body {
-    //             background-color: #f5f5f5;
-    //             font-family: Arial, sans-serif;
-    //             color: #333333;
-    //           }
-
-    //           .container {
-    //             max-width: 600px;
-    //             margin: 0 auto;
-    //             padding: 20px;
-    //             background-color: #ffffff;
-    //             border-radius: 5px;
-    //             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    //           }
-
-    //           h1 {
-    //             font-size: 24px;
-    //             color: #0066cc;
-    //             margin-top: 0;
-    //           }
-
-    //           p {
-    //             font-size: 16px;
-    //             margin-bottom: 20px;
-    //           }
-
-    //           .button {
-    //             display: inline-block;
-    //             background-color: #0066cc;
-    //             color: #ffffff;
-    //             text-decoration: none;
-    //             padding: 10px 20px;
-    //             border-radius: 4px;
-    //             transition: background-color 0.3s ease;
-    //           }
-
-    //           .button:hover {
-    //             background-color: #0052a3;
-    //           }
-    //         </style>
-    //       </head>
-    //       <body>
-    //         <div class="container">
-    //           <h1>Бүртгүүлсэн хаягаа баталгаажуулах нь</h1>
-    //           <p>Та хаягаа баталгаажуулахын тулд доорх холбоосоор дарна уу:</p>
-    //           <p><a href="${verificationUrl}" class="button">Баталгаажуулах</a></p>
-    //           <p>Энэ нь автоматаар илгээгдсэн имэйл болон таны бүртгэлийн мэдээллүүдийг баталгаажуулах зорилгоор явагдсан болно.</p>
-    //           <p>Хаягаа баталгаажуулахад асуудал гарвал, та доорх имэйл хаяг руу холбогдоно уу: <a href="${process.env.MY_GMAIL}">${process.env.MY_GMAIL}</a></p>
-    //         </div>
-    //       </body>
-    //     </html>
-    //   `,
-    // });
     res.status(200).json({
       success: true,
       message: "Бүртгэл үүслээ",
@@ -144,55 +58,6 @@ exports.createUser = asyncHandler(async (req, res, next) => {
     res.status(500).json({
       success: false,
       message: "Серверийн алдаа",
-    });
-  }
-});
-
-exports.registerUser = asyncHandler(async (req, res, next) => {
-  const { username, email, password, role } = req.body;
-
-  if (!username || !email || !password || !role) {
-    console.log("aldaa end bn");
-    return res.status(400).json({
-      success: false,
-      message: "Талбар дутуу байна",
-    });
-  }
-
-  const existingUser = await users.findAll({
-    where: {
-      [Op.or]: [{ username: username }, { email: email }],
-    },
-  });
-
-  if (existingUser.length > 0) {
-    return res.status(500).json({
-      success: false,
-      message: "Бүртэлтэй байна",
-    });
-  }
-
-  try {
-    const salt = await bcrypt.genSalt(10);
-    let encryptedPassword = await bcrypt.hash(password, salt);
-    console.log("burteneee");
-    await users.create({
-      username: username,
-      email: email,
-      password: encryptedPassword,
-      role: role,
-    });
-    console.log("burtgetseeen");
-    return res.status(200).json({
-      success: true,
-      // token: encryptedPassword,
-      message: "Амжилттай бүртгэлээ",
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "Сервертэй холбогдож чадсангүй",
     });
   }
 });
@@ -217,11 +82,11 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
 });
 
 exports.getUser = asyncHandler(async (req, res, next) => {
-  const id = req.params.id;
+  const username = req.params.username;
 
   const user = await users.findOne({
     where: {
-      id: id
+      username: username
     }
   });
 
@@ -232,26 +97,38 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     });
   }
 
+  const blog = await blogs.findAll({
+    where: {
+      userid: user.id
+    }
+  });
+
+  const profile = await UserProfile.findOne({
+    where: {
+      userid: user.id
+    }
+  });
+
   return res.status(200).json({
     success: true,
-    user
+    user: {
+      ...user,
+      image: profile?.filelink
+    },
+    blogs: blog
   });
 });
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
-  const { username, firstname, lastname, email, phonenumber } = req.body;
-
-  // Formdata image-ийг Firebase-д хадгалаад URL-ийг нь авна
-  const imageUrl = "";
+  const { firstname, lastname, email, phonenumber, profile } = req.body;
+  console.log(req.body);
 
   const updatedUser = {
-    username: username,
-    firstname: firstname,
-    lastname: lastname,
-    email: email,
-    phonenumber: phonenumber,
-    image: imageUrl
+    firstname,
+    lastname,
+    email,
+    phonenumber
   }
   await users.update(updatedUser,
     {
@@ -260,7 +137,20 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
       }
     }
   );
-  res.status(200).json("User info edited");
+  await UserProfile.update({
+    filename: profile.name,
+    filesize: profile.size,
+    filelink: profile.link
+  }, {
+    where: {
+      userid: id
+    }
+  })
+
+  res.status(200).json({
+    success: true,
+    message: "User info edited"
+  });
 });
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
@@ -278,6 +168,11 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
           id: id,
         },
       });
+      await UserProfile.destroy({
+        where: {
+          userid: id,
+        },
+      });
       res.status(200).json("User removed successfully!");
     } else {
       res.status(200).json("Can't remove admin!");
@@ -288,7 +183,7 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.findUser = asyncHandler(async (req, res, next) => {
-  const name = req.params.searchname;
+  const {name} = req.body;
   const existingUsers = await users.findAll({
     where: {
       [Op.or]: [
