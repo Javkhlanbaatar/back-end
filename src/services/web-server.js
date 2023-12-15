@@ -19,6 +19,7 @@ const blogfiles = require("../models/blogFiles");
 const userprofile = require("../models/userProfile");
 const BlogPoster = require("../models/blogPoster");
 const GroupPoster = require("../models/groupPoster");
+const TaskFiles = require("../models/taskFiles");
 
 // const scheduler = require("./scheduler"); // устгаж болохгүй!!!
 function initialize() {
@@ -47,40 +48,57 @@ function initialize() {
   app.use(cors());
   app.use(express.json());
 
-  
+
   const loginRoute = require('../routes/login.Route');
   const usersRoute = require('../routes/users.Route');
   const uploadRoute = require('../routes/upload.Route');
   const socketRoute = require('../routes/socket.Route');
   const blogRoute = require('../routes/blog.Route');
   const groupRoute = require('../routes/group.Route');
-  
+  const taskRoute = require('../routes/task.Route');
+
   app.use('/auth', loginRoute);
   app.use('/user', usersRoute);
-  app.use('/image',uploadRoute );
+  app.use('/image', uploadRoute);
   app.use('/blog', blogRoute);
   app.use('/group', groupRoute);
   app.use('/uploads', express.static(path.join(__dirname, '../src/upload'))); // Serve static files from the 'src/upload' folder
-  app.use('/socket',socketRoute);
+  app.use('/socket', socketRoute);
+  app.use('/task', taskRoute);
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../src/upload/index.html'));
   });
-  
+
 
   app.use("/public", express.static("public"));
 
   Users.sync()
-  .then(() => {ChatMessage.sync();friend.sync()});
-  group.sync().then(() => {groupmember.sync(); task.sync();})
-  .then(() => blog.sync()).then(() => blogfiles.sync())
-  .then(() => BlogPoster.sync()).then(() => userprofile.sync()
-  .then(() => GroupPoster.sync()));
+    .then(() => {
+      userprofile.sync();
+      ChatMessage.sync();
+      friend.sync();
+    });
+  group.sync()
+    .then(() => {
+      GroupPoster.sync();
+      groupmember.sync();
+      task.sync()
+        .then(() => {
+          TaskFiles.sync();
+          blog.sync()
+            .then(() => {
+              BlogPoster.sync();
+              blogfiles.sync();
+            });
+        });
+    })
+
   app.listen(process.env.PORT, function () {
     console.log("Server is ready at" + process.env.PORT);
   });
 }
 
-function close() {}
+function close() { }
 
 module.exports.initialize = initialize;
 module.exports.close = close;

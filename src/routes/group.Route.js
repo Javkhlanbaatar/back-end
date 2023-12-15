@@ -4,6 +4,6 @@ const {createGroup, getGroup, getGroups, createPoster} = require("../controllers
 
 router.route("/").post(protect, createGroup);
 router.route("/poster").post(protect, createPoster);
-router.route("/").get(getGroups);
-router.route("/:id").get(getGroup);
+router.route("/").get(protect, getGroups);
+router.route("/:id").get(protect, getGroup);
 module.exports = router;

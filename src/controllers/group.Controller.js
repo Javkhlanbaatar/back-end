@@ -5,6 +5,7 @@ const group = require("../models/group");
 const groupMember = require("../models/groupMember");
 const users = require("../models/users");
 const GroupPoster = require("../models/groupPoster");
+const Task = require("../models/task");
 exports.createGroup = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { name, description, status } = req.body;
@@ -72,10 +73,25 @@ exports.createPoster = asyncHandler(async (req, res, next) => {
 });
 
 exports.getGroups = asyncHandler(async (req, res, next) => {
-  //method for admin that gets every users
-  const grouplist = await group.findAll({
-    order: [["id", "DESC"]],
-  })
+  const userid = req.userid;
+  const groupId = await groupMember.findAll({
+    where: {
+      id: userid
+    },
+  });
+  let grouplist = [];
+  for (item in groupId) {
+    const onegroup = await group.findOne({
+      where: item.groupid
+    });
+    const tasks = await Task.findAll({
+      where: {
+        groupid: onegroup.id
+      }
+    })
+    onegroup.tasks = tasks;
+    grouplist.push(onegroup);
+  }
 
   return res.status(200).json({
     data: grouplist,

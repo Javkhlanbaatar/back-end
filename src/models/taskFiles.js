@@ -1,32 +1,31 @@
 const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
-const moment = require('moment');
-const Group = require('./group');
+const Task = require("./task");
 
-class Task extends Model {}
+class TaskFiles extends Model {}
 
-Task.init(
+TaskFiles.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    groupid: {
+    taskid: {
       type: DataTypes.INTEGER,
       references: {
-        model: Group,
+        model: Task,
         key: 'id'
       },
     },
-    description: {
-      type: DataTypes.STRING,
+    filename: {
+      type: DataTypes.STRING
     },
-    starttime: {
-      type: DataTypes.DATE,
+    filesize: {
+      type: DataTypes.INTEGER
     },
-    endtime: {
-      type: DataTypes.DATE,
+    filelink: {
+      type: DataTypes.STRING
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -37,22 +36,22 @@ Task.init(
       },
     },
     updatedAt: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATE
     },
   },
   {
     sequelize: db,
-    modelName: 'task',
-    tableName: 'task', 
+    modelName: 'taskfiles',
+    tableName: 'taskfiles', 
         freezeTableName: true,
   }
 );
 
-Task.belongsTo(Group, {
-  foreignKey: 'groupid',
+TaskFiles.belongsTo(Task, {
+  foreignKey: 'taskid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',
 });
 
-module.exports = Task;
+module.exports = TaskFiles;
