@@ -151,7 +151,7 @@ exports.getBlog = asyncHandler(async (req, res, next) => {
     data: {
       ...blog_blog,
       user: blog_user,
-      image: blog_poster.filelink,
+      image: blog_poster?.filelink,
       files: blog_files
     },
     success: true,
