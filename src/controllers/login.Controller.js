@@ -1,9 +1,8 @@
 const jwt = require("jsonwebtoken");
-const { Op, QueryTypes } = require("sequelize");
+const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
 const asyncHandler = require("../middleware/asyncHandler");
 const Users = require("../models/users");
-const profile = require("../models/upload");
 // const io = require('socket.io');
 
 
@@ -68,6 +67,37 @@ exports.Login = asyncHandler(async (req, res, next) => {
       message: "Нэвтрэх нэр эсвэл нууц үг буруу байна",
     });
   }
+});
+
+exports.checkAuth = asyncHandler(async (req, res, next) => {
+  const { username } = req;
+
+  if (!username) {
+    return res.status(400).json({
+      success: false,
+      message: "Параметр дутуу байна.",
+    });
+  }
+
+  const user = await Users.findOne({
+    where: {
+      [Op.or]: [
+        { username: username },
+      ],
+    },
+  });
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: "Бүртгэлгүй хэрэглэгч",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Идэвхтэй",
+  });
 });
 
 exports.adminLogin = asyncHandler(async (req, res, next) => {

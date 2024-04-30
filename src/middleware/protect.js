@@ -24,14 +24,8 @@ exports.protect = asyncHandler(async (req, res, next) => {
     const decoded = jwt.decode(token, { complete: true });
 
     req.userid = decoded.payload.userid;
-    // req.login = decoded.payload.login;
-    // req.company_id = decoded.payload.company_id;
-    // req.is_type = decoded.payload.is_type;
     req.email = decoded.payload.email;
-    // req.check_lot_id = decoded.payload.check_lot_id;
     req.username = decoded.payload.username;
-    // // const connection_id = "odoo_undram";
-    // // req.odoo_conn = odoo[connection_id];
 
     next();
   } catch (err) {
