@@ -3,23 +3,24 @@ const http = require("http");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const path = require('path');
+const path = require("path");
 const app = express();
 const port = process.env.PORT;
 
-//db table add 
-const Users = require('../models/users')
-const ChatMessage = require('../models/chatMessage');
-const friend = require('../models/friend');
-const group = require('../models/group');
-const groupmember = require('../models/groupMember');
-const blog = require('../models/blog');
-const task = require('../models/task');
-const blogfiles = require("../models/blogFiles");
+//db table add
+const Users = require("../models/users");
+const ChatMessage = require("../models/chatMessage");
+const friend = require("../models/friend");
+const Group = require("../models/group");
+const GroupMember = require("../models/groupMember");
+const Blog = require("../models/blog");
+const Task = require("../models/task");
+const BlogFiles = require("../models/blogFiles");
 const userprofile = require("../models/userProfile");
 const BlogPoster = require("../models/blogPoster");
 const GroupPoster = require("../models/groupPoster");
 const TaskFiles = require("../models/taskFiles");
+const BlogLikes = require("../models/blogLikes");
 
 // const scheduler = require("./scheduler"); // устгаж болохгүй!!!
 function initialize() {
@@ -48,57 +49,53 @@ function initialize() {
   app.use(cors());
   app.use(express.json());
 
+  const loginRoute = require("../routes/login.Route");
+  const usersRoute = require("../routes/users.Route");
+  const uploadRoute = require("../routes/upload.Route");
+  const socketRoute = require("../routes/socket.Route");
+  const blogRoute = require("../routes/blog.Route");
+  const groupRoute = require("../routes/group.Route");
+  const taskRoute = require("../routes/task.Route");
 
-  const loginRoute = require('../routes/login.Route');
-  const usersRoute = require('../routes/users.Route');
-  const uploadRoute = require('../routes/upload.Route');
-  const socketRoute = require('../routes/socket.Route');
-  const blogRoute = require('../routes/blog.Route');
-  const groupRoute = require('../routes/group.Route');
-  const taskRoute = require('../routes/task.Route');
-
-  app.use('/auth', loginRoute);
-  app.use('/user', usersRoute);
-  app.use('/image', uploadRoute);
-  app.use('/blog', blogRoute);
-  app.use('/group', groupRoute);
-  app.use('/uploads', express.static(path.join(__dirname, '../src/upload'))); // Serve static files from the 'src/upload' folder
-  app.use('/socket', socketRoute);
-  app.use('/task', taskRoute);
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../src/upload/index.html'));
+  app.use("/auth", loginRoute);
+  app.use("/user", usersRoute);
+  app.use("/image", uploadRoute);
+  app.use("/blog", blogRoute);
+  app.use("/group", groupRoute);
+  app.use("/uploads", express.static(path.join(__dirname, "../src/upload"))); // Serve static files from the 'src/upload' folder
+  app.use("/socket", socketRoute);
+  app.use("/task", taskRoute);
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../src/upload/index.html"));
   });
-
 
   app.use("/public", express.static("public"));
 
-  Users.sync()
-    .then(() => {
-      userprofile.sync();
-      ChatMessage.sync();
-      friend.sync();
+  Users.sync().then(() => {
+    userprofile.sync();
+    ChatMessage.sync();
+    friend.sync();
+  });
+  Group.sync().then(() => {
+    GroupPoster.sync();
+    GroupMember.sync();
+    Task.sync().then(() => {
+      TaskFiles.sync();
     });
-  group.sync()
-    .then(() => {
-      GroupPoster.sync();
-      groupmember.sync();
-      task.sync()
-        .then(() => {
-          TaskFiles.sync();
-          blog.sync()
-            .then(() => {
-              BlogPoster.sync();
-              blogfiles.sync();
-            });
-        });
-    })
+  });
+
+  Blog.sync().then(() => {
+    BlogPoster.sync();
+    BlogFiles.sync();
+    BlogLikes.sync();
+  });
 
   app.listen(process.env.PORT, function () {
     console.log("Server is ready at" + process.env.PORT);
   });
 }
 
-function close() { }
+function close() {}
 
 module.exports.initialize = initialize;
 module.exports.close = close;

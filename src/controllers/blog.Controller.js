@@ -1,15 +1,14 @@
-const { Op, QueryTypes } = require("sequelize");
-const bcrypt = require("bcrypt");
 const asyncHandler = require("../middleware/asyncHandler");
-const blog = require("../models/blog");
 const users = require("../models/users");
 const BlogPoster = require("../models/blogPoster");
 const BlogFiles = require("../models/blogFiles");
+const BlogLikes = require("../models/blogLikes");
+const Blog = require("../models/blog");
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { description, title, status } = req.body;
 
-  const new_blog = await blog.create({
+  const new_blog = await Blog.create({
     userid: userid,
     title: title,
     description: description,
@@ -19,96 +18,104 @@ exports.createBlog = asyncHandler(async (req, res, next) => {
   if (!new_blog) {
     return req.status(400).json({
       succes: false,
-      message: "Failed to create new blog"
+      message: "Failed to create new blog",
     });
   }
 
   return res.status(200).json({
     success: true,
     message: "Created New Blog",
-    data: new_blog.dataValues
+    data: new_blog.dataValues,
   });
 });
 
 exports.createBlogPoster = asyncHandler(async (req, res, next) => {
-  const { blogid, poster } = req.body
+  const { blogid, poster } = req.body;
   if (poster) {
     const blog_poster = await BlogPoster.create({
       blogid: blogid,
       filename: poster.name,
       filesize: poster.size,
-      filelink: poster.link
+      filelink: poster.link,
     });
     return res.status(200).json({
       success: true,
       message: "Created New Blog Poster",
-      data: blog_poster.dataValues
+      data: blog_poster.dataValues,
     });
   } else
     return res.status(400).json({
       success: false,
-      message: "Poster is empty"
+      message: "Poster is empty",
     });
 });
 
 exports.createBlogFile = asyncHandler(async (req, res, next) => {
-  const { blogid, file } = req.body
+  const { blogid, file } = req.body;
   if (file) {
     const new_file = await BlogFiles.create({
       blogid: blogid,
       filename: file.name,
       filesize: file.size,
-      filelink: file.link
+      filelink: file.link,
     });
     return res.status(200).json({
       success: true,
       message: "Created New Blog File",
-      data: new_file.dataValues
+      data: new_file.dataValues,
     });
   } else
     return res.status(400).json({
       success: false,
-      message: "File is empty"
+      message: "File is empty",
     });
 });
 
 exports.getBlogs = asyncHandler(async (req, res, next) => {
+  const ownId = req.userid;
   const { userid } = req.body;
   let blogList = [];
   if (userid) {
-    blogList = await blog
-      .findAll({
-        where: {
-          userid: userid
-        },
-        order: [["id", "DESC"]],
-      })
+    blogList = await Blog.findAll({
+      where: {
+        userid: userid,
+      },
+      order: [["id", "DESC"]],
+    });
   } else {
-    blogList = await blog
-      .findAll({
-        order: [["id", "DESC"]],
-      })
-  }
-  const blogs = []
-  for (let j in blogList) {
-    const user = await users.findOne({
-      where: {
-        id: blogList[j].userid
-      }
+    blogList = await Blog.findAll({
+      order: [["id", "DESC"]],
     });
-    const poster = await BlogPoster.findOne({
-      where: {
-        blogid: blogList[j].id
-      }
-    });
-    const iterativeBlog = {
-      ...blogList[j],
-      firstname: user.firstname,
-      lastname: user.lastname,
-      poster
-    }
-    blogs.push(iterativeBlog)
   }
+  const blogs = [];
+  await Promise.all(
+    blogList.map(async (blog, index) => {
+      const user = await users.findOne({
+        where: {
+          id: blog.userid,
+        },
+      });
+      const poster = await BlogPoster.findOne({
+        where: {
+          blogid: blog.id,
+        },
+      });
+      const likedBlog = await BlogLikes.findOne({
+        where: {
+          blogid: blog.id,
+          userid: ownId,
+        },
+      });
+      const iterativeBlog = {
+        ...blog,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        poster,
+        liked: likedBlog? true : false,
+      };
+      blogs.push(iterativeBlog);
+    })
+  );
   return res.status(200).json({
     data: blogs,
     message: "Blog list",
@@ -116,125 +123,136 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
 });
 
 exports.getBlog = asyncHandler(async (req, res, next) => {
+  const ownId = req.userid;
   const id = req.params.id;
 
-  const blog_blog = await blog.findOne({
+  const blog_blog = await Blog.findOne({
     where: {
-      id: id
-    }
+      id: id,
+    },
   });
 
-  if (!blog_blog) {
+  if (!blog_blog || (ownId != blog_blog.userid && blog_blog.status == 2)) {
     return res.status(404).json({
       success: false,
-      message: "Blog not found"
+      message: "Blog not found",
     });
   }
 
   const blog_user = await users.findOne({
     where: {
-      id: blog_blog.userid
-    }
+      id: blog_blog.userid,
+    },
   });
   const blog_poster = await BlogPoster.findOne({
     where: {
-      blogid: id
-    }
+      blogid: id,
+    },
   });
   const blog_files = await BlogFiles.findAll({
     where: {
-      blogid: id
-    }
+      blogid: id,
+    },
+  });
+  const likedBlog = await BlogLikes.findOne({
+    where: {
+      blogid: id,
+      userid: ownId,
+    },
   });
 
   return res.status(200).json({
     data: {
       ...blog_blog,
       user: blog_user,
-      image: blog_poster?.filelink,
-      files: blog_files
+      image: blog_poster,
+      files: blog_files,
+      liked: likedBlog ? true : false
     },
     success: true,
-
   });
 });
 
 exports.editBlog = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
   const { description, title, status, poster, files } = req.body;
-  const updatedBlog = { description: description, title: title, status: status }
-  await blog.update(updatedBlog,
-    {
-      where: {
-        id: id
-      }
-    }
-  );
-  if (poster) {
-    const blog_poster = await BlogPoster.update({
-      filename: poster.name,
-      filesize: poster.size,
-      filelink: poster.link
+  const updatedBlog = {
+    description: description,
+    title: title,
+    status: status,
+  };
+  await Blog.update(updatedBlog, {
+    where: {
+      id: id,
     },
+  });
+  if (poster) {
+    const blog_poster = await BlogPoster.update(
+      {
+        filename: poster.name,
+        filesize: poster.size,
+        filelink: poster.link,
+      },
       {
         where: {
-          blogid: id
-        }
+          blogid: id,
+        },
       }
     );
   }
   if (files) {
-    const new_files = files.map(async (item, index) =>
-      await BlogFiles.create({
-        blogid: new_blog.dataValues.id,
-        filename: item.name,
-        filesize: item.size,
-        filelink: item.link
-      })
-    )
+    const new_files = files.map(
+      async (item, index) =>
+        await BlogFiles.create({
+          blogid: new_blog.dataValues.id,
+          filename: item.name,
+          filesize: item.size,
+          filelink: item.link,
+        })
+    );
   }
   return res.status(200).json({
     success: true,
-    message: "Updated blog info"
-  })
+    message: "Updated blog info",
+  });
 });
 
 exports.deleteBlog = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
-  await blog.destroy({
+  await Blog.destroy({
     where: {
       id: id,
-    }
+    },
   });
   await BlogPoster.destroy({
     where: {
       blogid: id,
-    }
+    },
   });
   await BlogFiles.destroy({
     where: {
       blogid: id,
-    }
+    },
   });
   res.status(200).json("Blog deleted successfully");
-
 });
 
 exports.findBlog = asyncHandler(async (req, res, next) => {
   const { title } = req.body;
-  const foundBlog = await blog.findOne({
+  const foundBlog = await Blog.findOne({
     where: {
-      title: title
-    }
+      title: title,
+    },
   });
-  if (!foundBlog) return res.status(404).json({
-    message: "Blog not found",
-    success: False
-  });
+  if (!foundBlog)
+    return res.status(404).json({
+      message: "Blog not found",
+      success: False,
+    });
   const user = await users.findOne({
     where: {
-      id: foundBlog.userid
-    }
+      id: foundBlog.userid,
+    },
   });
   const shortFoundBlog = {
     title: foundBlog.title,
@@ -243,9 +261,61 @@ exports.findBlog = asyncHandler(async (req, res, next) => {
     description: foundBlog.description,
     likeCount: foundBlog.likeCount,
     date: foundBlog.createdAt,
-  }
+  };
   return res.status(200).json({
     success: true,
-    data: shortFoundBlog
+    data: shortFoundBlog,
+  });
+});
+
+exports.likeBlog = asyncHandler(async (req, res, next) => {
+  const { userid } = req;
+  const blogid = req.params.id;
+
+  if (!userid) {
+    return res.status(401).json({
+      success: false,
+      message: "Login first",
+    });
+  }
+
+  const blogLikes = await BlogLikes.findOne({
+    where: {
+      blogid,
+      userid,
+    },
+  });
+
+  if (blogLikes) {
+    await BlogLikes.destroy({
+      where: {
+        blogid,
+        userid,
+      },
+    });
+    await Blog.decrement("likeCount", {
+      where: {
+        id: blogid
+      }
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Unliked",
+    });
+  }
+
+  const newBlogLike = await BlogLikes.create({
+    blogid,
+    userid,
+  });
+  await Blog.increment("likeCount", {
+    where: {
+      id: blogid
+    }
+  });
+  return res.status(200).json({
+    success: true,
+    message: "Liked",
+    data: newBlogLike,
   });
 });
