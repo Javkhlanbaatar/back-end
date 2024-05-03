@@ -10,13 +10,6 @@ exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { description, title, status } = req.body;
 
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
-
   const new_blog = await Blog.create({
     userid: userid,
     title: title,
@@ -40,12 +33,6 @@ exports.createBlog = asyncHandler(async (req, res, next) => {
 
 exports.createBlogPoster = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
 
   const { blogid, poster } = req.body;
   if (poster) {
@@ -210,13 +197,7 @@ exports.getBlog = asyncHandler(async (req, res, next) => {
 });
 
 exports.editBlog = asyncHandler(async (req, res, next) => {
-  const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
+  const userid = req.userid;  
 
   const id = req.params.id;
   const { description, title, status, poster, files } = req.body;
@@ -263,12 +244,6 @@ exports.editBlog = asyncHandler(async (req, res, next) => {
 
 exports.deleteBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
 
   const id = req.params.id;
   await Blog.destroy({
@@ -291,12 +266,6 @@ exports.deleteBlog = asyncHandler(async (req, res, next) => {
 
 exports.findBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
 
   const { title } = req.body;
   const foundBlog = await Blog.findOne({
@@ -330,12 +299,6 @@ exports.findBlog = asyncHandler(async (req, res, next) => {
 
 exports.likeBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
 
   const blogid = req.params.id;
   const blogLikes = await BlogLikes.findOne({

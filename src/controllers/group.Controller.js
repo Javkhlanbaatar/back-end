@@ -10,12 +10,6 @@ const Users = require("../models/users");
 const { checkout, post } = require("../routes/group.Route");
 exports.createGroup = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
 
   const { name, description, status } = req.body;
   const same_group = await group.findOne({
@@ -57,12 +51,6 @@ exports.createGroup = asyncHandler(async (req, res, next) => {
 
 exports.createPoster = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
   
   const { groupid, poster } = req.body
   if (poster) {
@@ -86,12 +74,6 @@ exports.createPoster = asyncHandler(async (req, res, next) => {
 
 exports.getGroups = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
 
   const groups = await groupMember.findAll({
     where: {
@@ -121,13 +103,6 @@ exports.getGroups = asyncHandler(async (req, res, next) => {
 });
 
 exports.getGroup = asyncHandler(async (req, res, next) => {
-  const userid = req.userid;
-  if (!userid) {
-    res.status(401).json({
-      success: false,
-      message: "Not Allowed"
-    });
-  }
   const id = req.params.id;
 
   const group_group = await group.findOne({
