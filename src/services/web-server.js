@@ -64,12 +64,12 @@ function initialize() {
     ChatMessage.sync();
     friend.sync();
   });
+  Task.sync().then(() => {
+    TaskFiles.sync();
+  });
   Group.sync().then(() => {
     GroupPoster.sync();
     GroupMember.sync();
-    Task.sync().then(() => {
-      TaskFiles.sync();
-    });
   });
 
   Blog.sync().then(() => {
