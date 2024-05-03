@@ -7,8 +7,16 @@ const users = require("../models/users");
 const GroupPoster = require("../models/groupPoster");
 const Task = require("../models/task");
 const Users = require("../models/users");
+const { checkout, post } = require("../routes/group.Route");
 exports.createGroup = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
+  if (!userid) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
+
   const { name, description, status } = req.body;
   const same_group = await group.findOne({
     where: {
@@ -27,11 +35,6 @@ exports.createGroup = asyncHandler(async (req, res, next) => {
     status: status,
   });
   if (newGroup) {
-    console.log("created new group here")
-    // return res.status(200).json({
-    //     success: true,
-    //     message: "Created New Group"
-    // });
     const groupAdmin = await groupMember.create({
       userid: userid,
       groupid: newGroup.id,
@@ -53,6 +56,14 @@ exports.createGroup = asyncHandler(async (req, res, next) => {
 });
 
 exports.createPoster = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  if (!userid) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
+  
   const { groupid, poster } = req.body
   if (poster) {
     const blog_poster = await GroupPoster.create({
@@ -75,6 +86,13 @@ exports.createPoster = asyncHandler(async (req, res, next) => {
 
 exports.getGroups = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
+  if (!userid) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
+
   const groups = await groupMember.findAll({
     where: {
       userid: userid
@@ -103,7 +121,15 @@ exports.getGroups = asyncHandler(async (req, res, next) => {
 });
 
 exports.getGroup = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  if (!userid) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
   const id = req.params.id;
+
   const group_group = await group.findOne({
     where: {
       id: id
@@ -150,4 +176,51 @@ exports.getGroup = asyncHandler(async (req, res, next) => {
     data: group_group,
     success: true,
   });
+});
+
+
+exports.updateGroup = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  if (userid !== id) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
+
+  const id = req.params.id;
+  const { name, description, status, poster } = req.body;
+  
+  try {
+    const updatedGroup = await group.update({
+      name: name,
+      description: description,
+      status: status,
+    }, {
+      where: {
+        id
+      }
+    });
+    if (poster) {
+      const updatedGroup = await GroupPoster.update({
+        groupid: id,
+        ...poster,
+      }, {
+        where: {
+          id
+        }
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Group updated",
+      data: updatedGroup
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to update group",
+      err
+    });
+  }
 });

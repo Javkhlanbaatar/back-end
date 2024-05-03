@@ -74,7 +74,7 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
         message: "Серверийн алдаа",
       });
     });
-  res.status(200).json({
+  return res.status(200).json({
     userList,
     message: "Хэрэглэгчийн жагсаалт",
   });
@@ -132,8 +132,16 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
+  const userid = req.userid;
   const { firstname, lastname, email, phonenumber, profile } = req.body;
   console.log(req.body);
+  
+  if (userid !== id) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
 
   const updatedUser = {
     firstname,
@@ -165,7 +173,16 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
   const id = req.params.id;
+
+  if (userid !== id) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed"
+    });
+  }
+
   const user = await users.findOne({
     where: {
       id: id,
