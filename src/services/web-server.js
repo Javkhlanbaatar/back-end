@@ -1,11 +1,7 @@
 let express = require("express");
-const http = require("http");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const path = require("path");
-const app = express();
-const port = process.env.PORT;
 
 //db table add
 const Users = require("../models/users");
@@ -51,7 +47,6 @@ function initialize() {
 
   const loginRoute = require("../routes/login.Route");
   const usersRoute = require("../routes/users.Route");
-  const uploadRoute = require("../routes/upload.Route");
   const socketRoute = require("../routes/socket.Route");
   const blogRoute = require("../routes/blog.Route");
   const groupRoute = require("../routes/group.Route");
@@ -59,17 +54,10 @@ function initialize() {
 
   app.use("/auth", loginRoute);
   app.use("/user", usersRoute);
-  app.use("/image", uploadRoute);
   app.use("/blog", blogRoute);
   app.use("/group", groupRoute);
-  app.use("/uploads", express.static(path.join(__dirname, "../src/upload"))); // Serve static files from the 'src/upload' folder
   app.use("/socket", socketRoute);
   app.use("/task", taskRoute);
-  app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../src/upload/index.html"));
-  });
-
-  app.use("/public", express.static("public"));
 
   Users.sync().then(() => {
     userprofile.sync();

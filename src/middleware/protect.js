@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("./asyncHandler");
 
-exports.protect = asyncHandler(async (req, res, next) => {
+exports.extractToken = asyncHandler(async (req, res, next) => {
   console.log(req.headers.authorization);
   if (!req.headers.authorization) {
     req.userid = "";
@@ -22,19 +22,30 @@ exports.protect = asyncHandler(async (req, res, next) => {
     try {
       jwt.verify(token, process.env.JWT_SECRET);
       const decoded = jwt.decode(token, { complete: true });
-  
+
       req.userid = decoded.payload.userid;
       req.email = decoded.payload.email;
       req.username = decoded.payload.username;
-  
+
       next();
     } catch (err) {
-      res.status(401).json({
+      return res.status(401).json({
         success: false,
         message: "Токен хүчингүй байна.",
         err,
       });
-      return;
     }
   }
+});
+
+exports.loggedIn = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  if (!userid) {
+    return res.status(401).json({
+      success: false,
+      message: "Login first",
+    });
+  }
+
+  next();
 });

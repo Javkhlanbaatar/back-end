@@ -7,7 +7,8 @@ const UserProfile = require("../models/userProfile");
 const BlogPoster = require("../models/blogPoster");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
-  const { username, firstname, lastname, email, phonenumber, password, } = req.body;
+  const { username, firstname, lastname, email, phonenumber, password } =
+    req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({
@@ -19,10 +20,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
   try {
     const existingUser = await users.findOne({
       where: {
-        [Op.or]: [
-          { username: username },
-          { email: email },
-        ],
+        [Op.or]: [{ username: username }, { email: email }],
       },
     });
 
@@ -36,17 +34,19 @@ exports.createUser = asyncHandler(async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const encryptedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = await users.create({
-      username: username,
-      firstname: firstname,
-      lastname: lastname,
-      email: email,
-      password: encryptedPassword,
-      phonenumber: phonenumber,
-    }).then(console.log(`User created`));
+    const newUser = await users
+      .create({
+        username: username,
+        firstname: firstname,
+        lastname: lastname,
+        email: email,
+        password: encryptedPassword,
+        phonenumber: phonenumber,
+      })
+      .then(console.log(`User created`));
     await UserProfile.create({
       userid: newUser.dataValues.id,
-    }).then(console.log("User profile created"))
+    }).then(console.log("User profile created"));
 
     res.status(200).json({
       success: true,
@@ -85,21 +85,21 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 
   const user = await users.findOne({
     where: {
-      username: username
-    }
+      username: username,
+    },
   });
 
   if (!user) {
     return res.status(404).json({
       success: false,
-      message: "User not found"
+      message: "User not found",
     });
   }
 
   const blog = await blogs.findAll({
     where: {
-      userid: user.id
-    }
+      userid: user.id,
+    },
   });
 
   const blog_blogs = [];
@@ -107,26 +107,26 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   for (item of blog) {
     const blog_poster = await BlogPoster.findOne({
       where: {
-        blogid: item.id
-      }
-    })
+        blogid: item.id,
+      },
+    });
     item.poster = blog_poster;
     blog_blogs.push(item);
   }
 
   const profile = await UserProfile.findOne({
     where: {
-      userid: user.id
-    }
+      userid: user.id,
+    },
   });
 
   return res.status(200).json({
     success: true,
     user: {
       ...user,
-      image: profile?.filelink
+      image: profile?.filelink,
     },
-    blogs: blog_blogs
+    blogs: blog_blogs,
   });
 });
 
@@ -135,11 +135,11 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { firstname, lastname, email, phonenumber, profile } = req.body;
   console.log(req.body);
-  
-  if (userid !== id) {
-    res.status(401).json({
+
+  if (userid != id) {
+    return res.status(401).json({
       success: false,
-      message: "Not Allowed"
+      message: "Not Allowed",
     });
   }
 
@@ -147,28 +147,31 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
     firstname,
     lastname,
     email,
-    phonenumber
-  }
-  await users.update(updatedUser,
-    {
-      where: {
-        id: id
-      }
-    }
-  );
-  await UserProfile.update({
-    filename: profile.name,
-    filesize: profile.size,
-    filelink: profile.link
-  }, {
+    phonenumber,
+  };
+  await users.update(updatedUser, {
     where: {
-      userid: id
-    }
-  })
+      id: id,
+    },
+  });
+  if (profile) {
+    await UserProfile.update(
+      {
+        filename: profile.name,
+        filesize: profile.size,
+        filelink: profile.link,
+      },
+      {
+        where: {
+          userid: id,
+        },
+      }
+    );
+  }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
-    message: "User info edited"
+    message: "User info edited",
   });
 });
 
@@ -176,10 +179,10 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const id = req.params.id;
 
-  if (userid !== id) {
+  if (userid != id) {
     res.status(401).json({
       success: false,
-      message: "Not Allowed"
+      message: "Not Allowed",
     });
   }
 
@@ -189,45 +192,36 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
     },
   });
 
-  if (user) {
-    if (user.role !== "Admin") {
-      await users.destroy({
-        where: {
-          id: id,
-        },
-      });
-      await UserProfile.destroy({
-        where: {
-          userid: id,
-        },
-      });
-      res.status(200).json("User removed successfully!");
-    } else {
-      res.status(200).json("Can't remove admin!");
-    }
-  } else {
-    res.status(404).json("User doesn't exist");
+  if (!user) {
+    return res.status(404).json("User doesn't exist");
   }
+
+  await users.destroy({
+    where: {
+      id: id,
+    },
+  });
+  await UserProfile.destroy({
+    where: {
+      userid: id,
+    },
+  });
+  return res.status(200).json("User removed successfully!");
 });
 
 exports.findUser = asyncHandler(async (req, res, next) => {
   const { name } = req.body;
   const existingUsers = await users.findAll({
     where: {
-      [Op.or]: [
-        { firstname: name },
-        { lastname: name },
-      ],
+      [Op.or]: [{ firstname: name }, { lastname: name }],
     },
   });
 
   return res.status(200).json({
     success: true,
-    data: existingUsers
+    data: existingUsers,
   });
-  // 
+  //
 });
 
-exports.addFriend = asyncHandler(async (req, res, next) => {
-
-});
+exports.addFriend = asyncHandler(async (req, res, next) => {});

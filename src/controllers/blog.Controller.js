@@ -67,7 +67,7 @@ exports.createBlogPoster = asyncHandler(async (req, res, next) => {
 
 exports.createBlogFile = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (userid !== id) {
+  if (userid != id) {
     res.status(401).json({
       success: false,
       message: "Not Allowed"

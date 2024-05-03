@@ -192,13 +192,12 @@ exports.changePassword= asyncHandler(async (req, res, next) => {
   if(newPass !==newPass2) {
     return res.status(400).json({
       success:false,
-      message:"Passwords not match"
+      message:"Passwords don't match"
     });
   }
   await Users.findOne({
     where: {
-      email: email,
-      verified: true,
+      email: email
     },
   })
     .then((result) => {

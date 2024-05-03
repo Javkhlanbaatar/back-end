@@ -181,13 +181,51 @@ exports.getGroup = asyncHandler(async (req, res, next) => {
 
 exports.updateGroup = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (userid !== id) {
+  if (userid != id) {
     res.status(401).json({
       success: false,
       message: "Not Allowed"
     });
   }
 
+  const id = req.params.id;
+  const { name, description, status, poster } = req.body;
+  
+  try {
+    const updatedGroup = await group.update({
+      name: name,
+      description: description,
+      status: status,
+    }, {
+      where: {
+        id
+      }
+    });
+    if (poster) {
+      const updatedGroup = await GroupPoster.update({
+        groupid: id,
+        ...poster,
+      }, {
+        where: {
+          id
+        }
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Group updated",
+      data: updatedGroup
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to update group",
+      err
+    });
+  }
+});
+
+exports.deleteGroup = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
   const { name, description, status, poster } = req.body;
   

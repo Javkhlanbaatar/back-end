@@ -1,12 +1,12 @@
 const router = require("express").Router();
 const { createTask, getTasks, createTaskFile } = require("../controllers/task.Controller");
-const { protect } = require("../middleware/protect");
+const { extractToken, loggedIn } = require("../middleware/protect");
 
-router.route("/").post(protect, createTask);
-router.route("/file").post(protect, createTaskFile);
-router.route("/").get(getTasks);
-// router.route("/:id").get(getBlog);
-// router.route("/find").get(findBlog);
-// router.route("/:id").delete(protect, deleteBlog);
-// router.route("/:id").put(protect, editBlog);
+router.route("/").post(extractToken, loggedIn, createTask);
+router.route("/file").post(extractToken, loggedIn, createTaskFile);
+router.route("/").get(extractToken, loggedIn, getTasks);
+// router.route("/:id").get(extractToken, loggedIn, getTask);
+// router.route("/find").get(extractToken, loggedIn, findTask);
+// router.route("/:id").delete(extractToken, loggedIn, deleteTask);
+// router.route("/:id").put(extractToken, loggedIn, editTask);
 module.exports = router;
