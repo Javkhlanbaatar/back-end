@@ -5,6 +5,7 @@ const users = require("../models/users");
 const blogs = require("../models/blog");
 const UserProfile = require("../models/userProfile");
 const BlogPoster = require("../models/blogPoster");
+const Blog = require("../models/blog");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
   const { username, firstname, lastname, email, phonenumber, password } =
@@ -202,6 +203,11 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
     },
   });
   await UserProfile.destroy({
+    where: {
+      userid: id,
+    },
+  });
+  await Blog.destroy({
     where: {
       userid: id,
     },

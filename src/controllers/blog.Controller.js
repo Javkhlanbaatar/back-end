@@ -4,6 +4,8 @@ const BlogPoster = require("../models/blogPoster");
 const BlogFiles = require("../models/blogFiles");
 const BlogLikes = require("../models/blogLikes");
 const Blog = require("../models/blog");
+const { Op } = require("sequelize");
+
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { description, title, status } = req.body;
@@ -108,6 +110,17 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
   } else {
     blogList = await Blog.findAll({
       order: [["id", "DESC"]],
+      where: {
+        [Op.or]: [
+          {
+            status: 0
+          },
+          {
+            status: 2,
+            userid: ownId
+          }
+        ]
+      }
     });
   }
   const blogs = [];
