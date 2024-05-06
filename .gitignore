@@ -105,4 +105,5 @@ dist
 src/config/config.env
 .vscode
 
+src/upload
 config/*.env

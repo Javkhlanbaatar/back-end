@@ -22,8 +22,6 @@ const BlogLikes = require("../models/blogLikes");
 function initialize() {
   const app = express();
   app.use(morgan("dev"));
-  // app.use(express.json());
-  // app.use(express.urlencoded({ extended: false }));
   app.use(
     express.json({
       limit: "50mb",
@@ -43,7 +41,6 @@ function initialize() {
     helmet.frameguard()
   );
   app.use(cors());
-  app.use(express.json());
 
   const loginRoute = require("../routes/login.Route");
   const usersRoute = require("../routes/users.Route");
@@ -63,19 +60,18 @@ function initialize() {
     userprofile.sync();
     ChatMessage.sync();
     friend.sync();
-  });
-  Task.sync().then(() => {
-    TaskFiles.sync();
-  });
-  Group.sync().then(() => {
-    GroupPoster.sync();
-    GroupMember.sync();
-  });
-
-  Blog.sync().then(() => {
-    BlogPoster.sync();
-    BlogFiles.sync();
-    BlogLikes.sync();
+    Group.sync().then(() => {
+      GroupPoster.sync();
+      GroupMember.sync();
+      Task.sync().then(() => {
+        TaskFiles.sync();
+      });
+    });
+    Blog.sync().then(() => {
+      BlogPoster.sync();
+      BlogFiles.sync();
+      BlogLikes.sync();
+    });
   });
 
   app.listen(process.env.PORT, function () {

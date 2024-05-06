@@ -1,10 +1,10 @@
 const router = require("express").Router();
 const { extractToken: extractToken, loggedIn} = require("../middleware/protect");
-const {createBlog, findBlog, deleteBlog, editBlog, getBlog, getBlogs, createBlogFile, createBlogPoster, likeBlog} = require("../controllers/blog.Controller");
+const {createBlog, findBlog, deleteBlog, editBlog, getBlog, getBlogs, likeBlog, changeBlogPoster, changeBlogFile} = require("../controllers/blog.Controller");
 
 router.route("/").post(extractToken, loggedIn, createBlog);
-router.route("/poster").post(extractToken, loggedIn, createBlogPoster);
-router.route("/file").post(extractToken, loggedIn, createBlogFile);
+router.route("/poster").post(extractToken, loggedIn, changeBlogPoster);
+router.route("/file").post(extractToken, loggedIn, changeBlogFile);
 router.route("/").get(extractToken, getBlogs);
 router.route("/:id").get(extractToken, getBlog);
 router.route("/find").get(extractToken, loggedIn, findBlog);

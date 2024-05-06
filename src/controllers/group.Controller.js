@@ -6,8 +6,6 @@ const groupMember = require("../models/groupMember");
 const users = require("../models/users");
 const GroupPoster = require("../models/groupPoster");
 const Task = require("../models/task");
-const Users = require("../models/users");
-const { checkout, post } = require("../routes/group.Route");
 exports.createGroup = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
 

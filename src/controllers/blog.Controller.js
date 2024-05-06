@@ -4,7 +4,7 @@ const BlogPoster = require("../models/blogPoster");
 const BlogFiles = require("../models/blogFiles");
 const BlogLikes = require("../models/blogLikes");
 const Blog = require("../models/blog");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
@@ -31,56 +31,115 @@ exports.createBlog = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.createBlogPoster = asyncHandler(async (req, res, next) => {
+exports.changeBlogPoster = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-
   const { blogid, poster } = req.body;
-  if (poster) {
+  const blog = await Blog.findOne({
+    where: {
+      id: blogid,
+    },
+  });
+  if (userid != blog.userid) {
+    res.status(401).json({
+      success: false,
+      message: "Not Allowed",
+    });
+  }
+
+  if (!poster) {
+    return res.status(400).json({
+      success: false,
+      message: "Poster is empty",
+    });
+  }
+
+  const oldPoster = await BlogPoster.findOne({
+    where: {
+      blogid: blogid,
+    },
+  });
+  let blog_poster = null;
+  if (oldPoster) {
+    const blog_poster = await BlogPoster.update(
+      {
+        filename: poster.name,
+        filesize: poster.size,
+        filelink: poster.link,
+      },
+      {
+        where: {
+          blogid: blogid,
+        },
+      }
+    );
+  } else {
     const blog_poster = await BlogPoster.create({
       blogid: blogid,
       filename: poster.name,
       filesize: poster.size,
       filelink: poster.link,
     });
-    return res.status(200).json({
-      success: true,
-      message: "Created New Blog Poster",
-      data: blog_poster.dataValues,
-    });
-  } else
-    return res.status(400).json({
-      success: false,
-      message: "Poster is empty",
-    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Changed Blog Poster",
+    data: blog_poster?.dataValues,
+  });
 });
 
-exports.createBlogFile = asyncHandler(async (req, res, next) => {
+exports.changeBlogFile = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  if (userid != id) {
+  const { blogid, files } = req.body;
+  const blog = await Blog.findOne({
+    where: {
+      id: blogid,
+    },
+  });
+  if (userid != blog.userid) {
     res.status(401).json({
       success: false,
-      message: "Not Allowed"
+      message: "Not Allowed",
     });
   }
 
-  const { blogid, file } = req.body;
-  if (file) {
-    const new_file = await BlogFiles.create({
-      blogid: blogid,
-      filename: file.name,
-      filesize: file.size,
-      filelink: file.link,
-    });
-    return res.status(200).json({
-      success: true,
-      message: "Created New Blog File",
-      data: new_file.dataValues,
-    });
-  } else
+  if (!files || files.length === 0) {
     return res.status(400).json({
       success: false,
       message: "File is empty",
     });
+  }
+
+  const uploadedFiles = await BlogFiles.findAll({
+    where: {
+      blogid: blogid,
+    },
+  });
+
+  if (uploadedFiles.length > 0) {
+    await BlogFiles.destroy({
+      where: {
+        blogid: blogid,
+      },
+    });
+  }
+  const new_files = await Promise.all([
+    files.map(
+      async (item) =>
+        await BlogFiles.create({
+          blogid: blogid,
+          filename: item.name,
+          filesize: item.size,
+          filelink: item.link,
+        })
+    )
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    message: "Changed Blog Files",
+    data: new_files.dataValues,
+  });
 });
 
 exports.getBlogs = asyncHandler(async (req, res, next) => {
@@ -100,14 +159,14 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
       where: {
         [Op.or]: [
           {
-            status: 0
+            status: 0,
           },
           {
             status: 2,
-            userid: ownId
-          }
-        ]
-      }
+            userid: ownId,
+          },
+        ],
+      },
     });
   }
   const blogs = [];
@@ -134,7 +193,7 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
         firstname: user.firstname,
         lastname: user.lastname,
         poster,
-        liked: likedBlog? true : false,
+        liked: likedBlog ? true : false,
       };
       blogs.push(iterativeBlog);
     })
@@ -190,17 +249,17 @@ exports.getBlog = asyncHandler(async (req, res, next) => {
       user: blog_user,
       image: blog_poster,
       files: blog_files,
-      liked: likedBlog ? true : false
+      liked: likedBlog ? true : false,
     },
     success: true,
   });
 });
 
 exports.editBlog = asyncHandler(async (req, res, next) => {
-  const userid = req.userid;  
+  const userid = req.userid;
 
   const id = req.params.id;
-  const { description, title, status, poster, files } = req.body;
+  const { description, title, status } = req.body;
   const updatedBlog = {
     description: description,
     title: title,
@@ -211,31 +270,6 @@ exports.editBlog = asyncHandler(async (req, res, next) => {
       id: id,
     },
   });
-  if (poster) {
-    const blog_poster = await BlogPoster.update(
-      {
-        filename: poster.name,
-        filesize: poster.size,
-        filelink: poster.link,
-      },
-      {
-        where: {
-          blogid: id,
-        },
-      }
-    );
-  }
-  if (files) {
-    const new_files = files.map(
-      async (item, index) =>
-        await BlogFiles.create({
-          blogid: new_blog.dataValues.id,
-          filename: item.name,
-          filesize: item.size,
-          filelink: item.link,
-        })
-    );
-  }
   return res.status(200).json({
     success: true,
     message: "Updated blog info",
@@ -317,8 +351,8 @@ exports.likeBlog = asyncHandler(async (req, res, next) => {
     });
     await Blog.decrement("likeCount", {
       where: {
-        id: blogid
-      }
+        id: blogid,
+      },
     });
     return res.status(200).json({
       success: true,
@@ -332,8 +366,8 @@ exports.likeBlog = asyncHandler(async (req, res, next) => {
   });
   await Blog.increment("likeCount", {
     where: {
-      id: blogid
-    }
+      id: blogid,
+    },
   });
   return res.status(200).json({
     success: true,
