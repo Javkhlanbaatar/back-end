@@ -6,6 +6,7 @@ const blogs = require("../models/blog");
 const UserProfile = require("../models/userProfile");
 const BlogPoster = require("../models/blogPoster");
 const Blog = require("../models/blog");
+const Friend = require("../models/friend");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
   const { username, firstname, lastname, email, phonenumber, password } =
@@ -82,6 +83,7 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
 });
 
 exports.getUser = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
   const username = req.params.username;
 
   const user = await users.findOne({
@@ -121,11 +123,20 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     },
   });
 
+  const friend = await Friend.findOne({
+    where: {
+      userid: userid,
+      friendid: user.id,
+      accepted: true,
+    },
+  });
+
   return res.status(200).json({
     success: true,
     user: {
       ...user,
       image: profile?.filelink,
+      friend: friend ? true : false,
     },
     blogs: blog_blogs,
   });
@@ -178,7 +189,7 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const id = req.params.id;
+  const id = Number(req.params.id);
 
   if (userid != id) {
     res.status(401).json({
@@ -202,17 +213,11 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
       id: id,
     },
   });
-  await UserProfile.destroy({
-    where: {
-      userid: id,
-    },
+
+  return res.status(200).json({
+    success: false,
+    message: "User removed successfully!",
   });
-  await Blog.destroy({
-    where: {
-      userid: id,
-    },
-  });
-  return res.status(200).json("User removed successfully!");
 });
 
 exports.findUser = asyncHandler(async (req, res, next) => {
@@ -229,5 +234,3 @@ exports.findUser = asyncHandler(async (req, res, next) => {
   });
   //
 });
-
-exports.addFriend = asyncHandler(async (req, res, next) => {});

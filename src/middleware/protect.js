@@ -7,6 +7,7 @@ exports.extractToken = asyncHandler(async (req, res, next) => {
     req.userid = "";
     req.email = "";
     req.username = "";
+    console.log("No authorization");
 
     next();
   }
@@ -16,6 +17,7 @@ exports.extractToken = asyncHandler(async (req, res, next) => {
     req.userid = "";
     req.email = "";
     req.username = "";
+    console.log("No token");
 
     next();
   } else {

@@ -26,8 +26,8 @@ Friend.init(
           key: 'id'
         },
     },
-    time: {
-      type: DataTypes.DATE,
+    accepted: {
+      type: DataTypes.BOOLEAN,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -51,6 +51,12 @@ Friend.init(
 
 Friend.belongsTo(Users, {
   foreignKey: 'userid',
+  targetKey: 'id',
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE',
+});
+Friend.belongsTo(Users, {
+  foreignKey: 'friendid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',

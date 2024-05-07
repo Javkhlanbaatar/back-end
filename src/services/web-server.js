@@ -48,6 +48,7 @@ function initialize() {
   const blogRoute = require("../routes/blog.Route");
   const groupRoute = require("../routes/group.Route");
   const taskRoute = require("../routes/task.Route");
+  const friendRoute = require("../routes/friend.Route");
 
   app.use("/auth", loginRoute);
   app.use("/user", usersRoute);
@@ -55,6 +56,7 @@ function initialize() {
   app.use("/group", groupRoute);
   app.use("/socket", socketRoute);
   app.use("/task", taskRoute);
+  app.use("/friend", friendRoute);
 
   Users.sync().then(() => {
     userprofile.sync();
