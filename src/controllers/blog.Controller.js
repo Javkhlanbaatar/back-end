@@ -4,7 +4,7 @@ const BlogPoster = require("../models/blogPoster");
 const BlogFiles = require("../models/blogFiles");
 const BlogLikes = require("../models/blogLikes");
 const Blog = require("../models/blog");
-const { Op, Sequelize } = require("sequelize");
+const { Op } = require("sequelize");
 
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
@@ -132,7 +132,7 @@ exports.changeBlogFile = asyncHandler(async (req, res, next) => {
           filesize: item.size,
           filelink: item.link,
         })
-    )
+    ),
   ]);
 
   return res.status(200).json({
@@ -169,33 +169,33 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
       },
     });
   }
-  const blogs = [];
-  await Promise.all(
-    blogList.map(async (blog, index) => {
-      const user = await users.findOne({
-        where: {
-          id: blog.userid,
-        },
-      });
-      const poster = await BlogPoster.findOne({
-        where: {
-          blogid: blog.id,
-        },
-      });
-      const likedBlog = await BlogLikes.findOne({
-        where: {
-          blogid: blog.id,
-          userid: ownId,
-        },
-      });
-      const iterativeBlog = {
+  const blogs = await Promise.all(
+    blogList.map(async (blog) => {
+      const [user, poster, likedBlog] = await Promise.all([
+        users.findOne({
+          where: {
+            id: blog.userid,
+          },
+        }),
+        BlogPoster.findOne({
+          where: {
+            blogid: blog.id,
+          },
+        }),
+        BlogLikes.findOne({
+          where: {
+            blogid: blog.id,
+            userid: ownId,
+          },
+        }),
+      ]);
+      return {
         ...blog,
         firstname: user.firstname,
         lastname: user.lastname,
         poster,
         liked: likedBlog ? true : false,
       };
-      blogs.push(iterativeBlog);
     })
   );
   return res.status(200).json({
@@ -297,7 +297,7 @@ exports.deleteBlog = asyncHandler(async (req, res, next) => {
   });
   res.status(200).json({
     success: true,
-    message: "Blog deleted successfully"
+    message: "Blog deleted successfully",
   });
 });
 

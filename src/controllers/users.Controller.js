@@ -86,65 +86,40 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const username = req.params.username;
 
-  let user = await users.findOne({
+  const exists = await users.findOne({
     where: {
       username: username,
     },
   });
 
-  if (!user) {
+  if (!exists) {
     return res.status(404).json({
       success: false,
       message: "User not found",
     });
   }
 
-  user = await userDetails(user.id);
-
-  const blog = await blogs.findAll({
-    where: {
-      userid: user.id,
-    },
-  });
-
-  const blog_blogs = [];
-
-  for (item of blog) {
-    const blog_poster = await BlogPoster.findOne({
+  const [user, all_blogs, friend, friends] = await Promise.all([
+    userDetails(exists.id),
+    userBlogs(exists.id),
+    Friend.findOne({
       where: {
-        blogid: item.id,
+        userid: exists,
+        friendid: exists.id,
+        accepted: true,
       },
-    });
-    item.poster = blog_poster;
-    blog_blogs.push(item);
-  }
-
-  const friend = await Friend.findOne({
-    where: {
-      userid: userid,
-      friendid: user.id,
-      accepted: true,
-    },
-  });
-
-  const friendsId = await Friend.findAll({
-    where: {
-      userid: user.id,
-      accepted: true,
-    },
-  });
-  const friends = await Promise.all(
-    friendsId.map(async (item) => await userDetails(item.friendid))
-  );
+    }),
+    userFriends(exists.id),
+  ]);
 
   return res.status(200).json({
     success: true,
-    user: {
+    data: {
       ...user,
       friend: friend ? true : false,
       friends: friends,
+      blogs: all_blogs,
     },
-    blogs: blog_blogs,
   });
 });
 
@@ -159,24 +134,6 @@ const userDetails = async (id) => {
     return null;
   }
 
-  const blog = await blogs.findAll({
-    where: {
-      userid: user.id,
-    },
-  });
-
-  const blog_blogs = [];
-
-  for (item of blog) {
-    const blog_poster = await BlogPoster.findOne({
-      where: {
-        blogid: item.id,
-      },
-    });
-    item.poster = blog_poster;
-    blog_blogs.push(item);
-  }
-
   const profile = await UserProfile.findOne({
     where: {
       userid: user.id,
@@ -188,6 +145,56 @@ const userDetails = async (id) => {
     profile: profile,
   };
 };
+
+const userBlogs = async (id) => {
+  let all_blogs = await blogs.findAll({
+    where: {
+      userid: id,
+    },
+  });
+
+  all_blogs = await Promise.all(
+    all_blogs.map(async (blog) => {
+      const poster = await BlogPoster.findOne({
+        where: {
+          blogid: blog.id,
+        },
+      });
+      blog.poster = poster;
+      return blog;
+    })
+  );
+
+  return all_blogs;
+};
+
+const userFriends = async (id) => {
+  const friendsId = await Friend.findAll({
+    where: {
+      userid: id,
+      accepted: true,
+    },
+  });
+  const friends = await Promise.all(
+    friendsId.map(async (item) => await userDetails(item.friendid))
+  );
+  return friends;
+};
+
+exports.getUserProfile = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+
+  const userProfile = await UserProfile.findOne({
+    where: {
+      userid: userid
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: userProfile
+  });
+});
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
