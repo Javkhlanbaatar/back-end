@@ -85,6 +85,9 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
 exports.getUser = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const username = req.params.username;
+  const page = req.query.page;
+  const perPage = req.query.perPage;
+  console.log(page + "-" + perPage);
 
   const exists = await users.findOne({
     where: {
@@ -99,9 +102,12 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     });
   }
 
+  let who = "";
+  if (userid === exists.id) who = "owner"
+
   const [user, all_blogs, friend, friends] = await Promise.all([
     userDetails(exists.id),
-    userBlogs(exists.id),
+    userBlogs(exists.id, who, page, perPage),
     Friend.findOne({
       where: {
         userid: exists,
@@ -146,12 +152,40 @@ const userDetails = async (id) => {
   };
 };
 
-const userBlogs = async (id) => {
-  let all_blogs = await blogs.findAll({
-    where: {
-      userid: id,
-    },
-  });
+const userBlogs = async (id, who, page, perPage) => {
+  let all_blogs = [];
+
+  if (who === "owner") {
+    all_blogs = await blogs.findAll({
+      where: {
+        userid: id,
+      },
+    });
+  }
+  else if (who === "friend") {
+    all_blogs = await blogs.findAll({
+      where: {
+        [Op.or]: [{
+          userid: id,
+          status: 0,
+        },
+        {
+          userid: id,
+          status: 1,
+        },
+      ]
+      },
+      order: [["id", "DESC"]],
+    });
+  }
+  else {
+    all_blogs = await blogs.findAll({
+      where: {
+        userid: id,
+        status: 0
+      },
+    });
+  }
 
   all_blogs = await Promise.all(
     all_blogs.map(async (blog) => {
@@ -165,7 +199,21 @@ const userBlogs = async (id) => {
     })
   );
 
-  return all_blogs;
+  let pages = 1;
+
+  const blogData = {
+    data: all_blogs,
+    page: page? page : 1,
+    perPage: perPage? perPage : 100,
+    pages: pages
+  }
+
+  if (page && perPage) {
+    blogData.data = blogData.data.slice(0+((page-1)*perPage), page*perPage);
+    blogData.pages = Math.ceil(all_blogs.length / perPage);
+  }
+
+  return blogData;
 };
 
 const userFriends = async (id) => {
