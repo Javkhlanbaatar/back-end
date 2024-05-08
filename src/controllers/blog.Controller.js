@@ -295,7 +295,10 @@ exports.deleteBlog = asyncHandler(async (req, res, next) => {
       blogid: id,
     },
   });
-  res.status(200).json("Blog deleted successfully");
+  res.status(200).json({
+    success: true,
+    message: "Blog deleted successfully"
+  });
 });
 
 exports.findBlog = asyncHandler(async (req, res, next) => {

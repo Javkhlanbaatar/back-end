@@ -77,7 +77,7 @@ function initialize() {
   });
 
   app.listen(process.env.PORT, function () {
-    console.log("Server is ready at" + process.env.PORT);
+    console.log("Server is ready at " + process.env.PORT);
   });
 }
 

@@ -86,7 +86,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const username = req.params.username;
 
-  const user = await users.findOne({
+  let user = await users.findOne({
     where: {
       username: username,
     },
@@ -97,6 +97,67 @@ exports.getUser = asyncHandler(async (req, res, next) => {
       success: false,
       message: "User not found",
     });
+  }
+
+  user = await userDetails(user.id);
+
+  const blog = await blogs.findAll({
+    where: {
+      userid: user.id,
+    },
+  });
+
+  const blog_blogs = [];
+
+  for (item of blog) {
+    const blog_poster = await BlogPoster.findOne({
+      where: {
+        blogid: item.id,
+      },
+    });
+    item.poster = blog_poster;
+    blog_blogs.push(item);
+  }
+
+  const friend = await Friend.findOne({
+    where: {
+      userid: userid,
+      friendid: user.id,
+      accepted: true,
+    },
+  });
+
+  const friendsId = await Friend.findAll({
+    where: {
+      userid: user.id,
+      accepted: true,
+    },
+  });
+  console.log(friendsId);
+  const friends = await Promise.all(
+    friendsId.map(async (item) => await userDetails(item.friendid))
+  );
+
+  return res.status(200).json({
+    success: true,
+    user: {
+      ...user,
+      friend: friend ? true : false,
+      friends: friends,
+    },
+    blogs: blog_blogs,
+  });
+});
+
+const userDetails = async (id) => {
+  const user = await users.findOne({
+    where: {
+      id: id,
+    },
+  });
+
+  if (!user) {
+    return null;
   }
 
   const blog = await blogs.findAll({
@@ -123,24 +184,11 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     },
   });
 
-  const friend = await Friend.findOne({
-    where: {
-      userid: userid,
-      friendid: user.id,
-      accepted: true,
-    },
-  });
-
-  return res.status(200).json({
-    success: true,
-    user: {
-      ...user,
-      image: profile?.filelink,
-      friend: friend ? true : false,
-    },
-    blogs: blog_blogs,
-  });
-});
+  return {
+    ...user,
+    profile: profile,
+  };
+};
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
@@ -205,7 +253,10 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
   });
 
   if (!user) {
-    return res.status(404).json("User doesn't exist");
+    return res.status(404).json({
+      success: false,
+      message: "User doesn't exist",
+    });
   }
 
   await users.destroy({
