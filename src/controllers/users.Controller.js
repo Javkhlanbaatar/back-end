@@ -133,7 +133,6 @@ exports.getUser = asyncHandler(async (req, res, next) => {
       accepted: true,
     },
   });
-  console.log(friendsId);
   const friends = await Promise.all(
     friendsId.map(async (item) => await userDetails(item.friendid))
   );
@@ -194,7 +193,6 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
   const id = req.params.id;
   const userid = req.userid;
   const { firstname, lastname, email, phonenumber, profile } = req.body;
-  console.log(req.body);
 
   if (userid != id) {
     return res.status(401).json({
