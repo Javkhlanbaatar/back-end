@@ -87,7 +87,6 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   const username = req.params.username;
   const page = req.query.page;
   const perPage = req.query.perPage;
-  console.log(page + "-" + perPage);
 
   const exists = await users.findOne({
     where: {
@@ -102,19 +101,21 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     });
   }
 
-  let who = "";
-  if (userid === exists.id) who = "owner"
+  const friend = await Friend.findOne({
+    where: {
+      userid: userid,
+      friendid: exists.id,
+      accepted: true,
+    },
+  });
 
-  const [user, all_blogs, friend, friends] = await Promise.all([
+  let who = "";
+  if (userid === exists.id) who = "owner";
+  else if (friend) who = "friend";
+
+  const [user, all_blogs, friends] = await Promise.all([
     userDetails(exists.id),
     userBlogs(exists.id, who, page, perPage),
-    Friend.findOne({
-      where: {
-        userid: exists,
-        friendid: exists.id,
-        accepted: true,
-      },
-    }),
     userFriends(exists.id),
   ]);
 

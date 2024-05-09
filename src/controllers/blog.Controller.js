@@ -5,6 +5,7 @@ const BlogFiles = require("../models/blogFiles");
 const BlogLikes = require("../models/blogLikes");
 const Blog = require("../models/blog");
 const { Op } = require("sequelize");
+const Friend = require("../models/friend");
 
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
@@ -144,31 +145,31 @@ exports.changeBlogFile = asyncHandler(async (req, res, next) => {
 
 exports.getBlogs = asyncHandler(async (req, res, next) => {
   const ownId = req.userid;
-  const { userid } = req.body;
-  let blogList = [];
-  if (userid) {
-    blogList = await Blog.findAll({
-      where: {
-        userid: userid,
-      },
-      order: [["id", "DESC"]],
-    });
-  } else {
-    blogList = await Blog.findAll({
-      order: [["id", "DESC"]],
-      where: {
-        [Op.or]: [
-          {
-            status: 0,
-          },
-          {
-            status: 2,
-            userid: ownId,
-          },
-        ],
-      },
-    });
-  }
+  const friends = await Friend.findAll({
+    where: {
+      userid: ownId,
+      accepted: true
+    }
+  });
+  const friendsId = friends.map((friend) => friend.friendid)
+  const blogList = await Blog.findAll({
+    order: [["id", "DESC"]],
+    where: {
+      [Op.or]: [
+        {
+          status: 0,
+        },
+        {
+          status: 1,
+          userid: friendsId
+        },
+        {
+          status: [1, 2],
+          userid: ownId,
+        },
+      ],
+    },
+  });
   const blogs = await Promise.all(
     blogList.map(async (blog) => {
       const [user, poster, likedBlog] = await Promise.all([
