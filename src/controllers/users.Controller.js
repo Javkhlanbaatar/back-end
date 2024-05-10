@@ -7,6 +7,7 @@ const UserProfile = require("../models/userProfile");
 const BlogPoster = require("../models/blogPoster");
 const Blog = require("../models/blog");
 const Friend = require("../models/friend");
+const BlogLikes = require("../models/blogLikes");
 
 exports.createUser = asyncHandler(async (req, res, next) => {
   const { username, firstname, lastname, email, phonenumber, password } =
@@ -168,11 +169,11 @@ const userBlogs = async (id, who, page, perPage) => {
       where: {
         [Op.or]: [{
           userid: id,
-          status: 0,
+          privacy: 0,
         },
         {
           userid: id,
-          status: 1,
+          privacy: 1,
         },
       ]
       },
@@ -183,7 +184,7 @@ const userBlogs = async (id, who, page, perPage) => {
     all_blogs = await blogs.findAll({
       where: {
         userid: id,
-        status: 0
+        privacy: 0
       },
     });
   }
@@ -195,7 +196,14 @@ const userBlogs = async (id, who, page, perPage) => {
           blogid: blog.id,
         },
       });
+      const liked = await BlogLikes.findOne({
+        where: {
+          blogid: blog.id,
+          userid: id
+        }
+      })
       blog.poster = poster;
+      blog.liked = liked? true : false
       return blog;
     })
   );

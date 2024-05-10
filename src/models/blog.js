@@ -30,10 +30,10 @@ Blog.init(
     title: {
       type: DataTypes.STRING,
     },
-    description: {
-      type: DataTypes.STRING(4096),
+    content: {
+      type: DataTypes.STRING(10240),
     },
-    status: {
+    privacy: {
       type: DataTypes.INTEGER,
     },
     likeCount: {

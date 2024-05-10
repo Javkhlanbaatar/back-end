@@ -9,13 +9,13 @@ const Friend = require("../models/friend");
 
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const { description, title, status } = req.body;
+  const { content, title, privacy } = req.body;
 
   const new_blog = await Blog.create({
     userid: userid,
     title: title,
-    description: description,
-    status: status,
+    content: content,
+    privacy: privacy,
     likeCount: 0,
   });
   if (!new_blog) {
@@ -148,23 +148,23 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
   const friends = await Friend.findAll({
     where: {
       userid: ownId,
-      accepted: true
-    }
+      accepted: true,
+    },
   });
-  const friendsId = friends.map((friend) => friend.friendid)
+  const friendsId = friends.map((friend) => friend.friendid);
   const blogList = await Blog.findAll({
     order: [["id", "DESC"]],
     where: {
       [Op.or]: [
         {
-          status: 0,
+          privacy: 0,
         },
         {
-          status: 1,
-          userid: friendsId
+          privacy: 1,
+          userid: friendsId,
         },
         {
-          status: [1, 2],
+          privacy: [1, 2],
           userid: ownId,
         },
       ],
@@ -215,7 +215,7 @@ exports.getBlog = asyncHandler(async (req, res, next) => {
     },
   });
 
-  if (!blog_blog || (ownId != blog_blog.userid && blog_blog.status == 2)) {
+  if (!blog_blog || (ownId != blog_blog.userid && blog_blog.privacy == 2)) {
     return res.status(404).json({
       success: false,
       message: "Blog not found",
@@ -260,11 +260,11 @@ exports.editBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
 
   const id = req.params.id;
-  const { description, title, status } = req.body;
+  const { content, title, privacy } = req.body;
   const updatedBlog = {
-    description: description,
+    content: content,
     title: title,
-    status: status,
+    privacy: privacy,
   };
   await Blog.update(updatedBlog, {
     where: {
