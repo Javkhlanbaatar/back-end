@@ -192,8 +192,7 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
       ]);
       return {
         ...blog,
-        firstname: user.firstname,
-        lastname: user.lastname,
+        user: user,
         poster,
         liked: likedBlog ? true : false,
       };
@@ -323,8 +322,7 @@ exports.findBlog = asyncHandler(async (req, res, next) => {
   });
   const shortFoundBlog = {
     title: foundBlog.title,
-    firstname: user.firstname,
-    lastname: user.lastname,
+    user: user,
     description: foundBlog.description,
     likeCount: foundBlog.likeCount,
     date: foundBlog.createdAt,

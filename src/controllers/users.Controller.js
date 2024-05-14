@@ -163,28 +163,27 @@ const userBlogs = async (id, who, page, perPage) => {
         userid: id,
       },
     });
-  }
-  else if (who === "friend") {
+  } else if (who === "friend") {
     all_blogs = await blogs.findAll({
       where: {
-        [Op.or]: [{
-          userid: id,
-          privacy: 0,
-        },
-        {
-          userid: id,
-          privacy: 1,
-        },
-      ]
+        [Op.or]: [
+          {
+            userid: id,
+            privacy: 0,
+          },
+          {
+            userid: id,
+            privacy: 1,
+          },
+        ],
       },
       order: [["id", "DESC"]],
     });
-  }
-  else {
+  } else {
     all_blogs = await blogs.findAll({
       where: {
         userid: id,
-        privacy: 0
+        privacy: 0,
       },
     });
   }
@@ -199,11 +198,11 @@ const userBlogs = async (id, who, page, perPage) => {
       const liked = await BlogLikes.findOne({
         where: {
           blogid: blog.id,
-          userid: id
-        }
-      })
+          userid: id,
+        },
+      });
       blog.poster = poster;
-      blog.liked = liked? true : false
+      blog.liked = liked ? true : false;
       return blog;
     })
   );
@@ -212,13 +211,16 @@ const userBlogs = async (id, who, page, perPage) => {
 
   const blogData = {
     data: all_blogs,
-    page: page? page : 1,
-    perPage: perPage? perPage : 100,
-    pages: pages
-  }
+    page: page ? page : 1,
+    perPage: perPage ? perPage : 100,
+    pages: pages,
+  };
 
   if (page && perPage) {
-    blogData.data = blogData.data.slice(0+((page-1)*perPage), page*perPage);
+    blogData.data = blogData.data.slice(
+      0 + (page - 1) * perPage,
+      page * perPage
+    );
     blogData.pages = Math.ceil(all_blogs.length / perPage);
   }
 
@@ -243,13 +245,13 @@ exports.getUserProfile = asyncHandler(async (req, res, next) => {
 
   const userProfile = await UserProfile.findOne({
     where: {
-      userid: userid
-    }
+      userid: userid,
+    },
   });
 
   return res.status(200).json({
     success: true,
-    data: userProfile
+    data: userProfile,
   });
 });
 
@@ -335,9 +337,14 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 
 exports.findUser = asyncHandler(async (req, res, next) => {
   const { name } = req.body;
+  const [firstname, lastname] = name.split(" ");
   const existingUsers = await users.findAll({
     where: {
-      [Op.or]: [{ firstname: name }, { lastname: name }],
+      [Op.or]: [
+        lastname
+          ? { firstname: {[Op.like]: `${firstname}%`}, lastname: {[Op.like]: `${lastname}%`} }
+          : { firstname: {[Op.like]: `${firstname}%`} },
+      ],
     },
   });
 
@@ -345,5 +352,4 @@ exports.findUser = asyncHandler(async (req, res, next) => {
     success: true,
     data: existingUsers,
   });
-  //
 });

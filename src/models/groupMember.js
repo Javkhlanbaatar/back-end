@@ -29,14 +29,6 @@ GroupMember.init(
     role: {
       type: DataTypes.INTEGER,
     },
-    entertime: {
-      type: DataTypes.DATE,
-      get() {
-        return moment(this.getDataValue("createdAt")).format(
-          "YYYY/MM/DD HH:mm"
-        );
-      },
-    },
     createdAt: {
       type: DataTypes.DATE,
       get() {

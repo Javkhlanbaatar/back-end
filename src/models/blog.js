@@ -39,6 +39,9 @@ Blog.init(
     likeCount: {
       type: DataTypes.INTEGER
     },
+    grade: {
+      type: DataTypes.INTEGER
+    },
     createdAt: {
       type: DataTypes.DATE,
       get() {

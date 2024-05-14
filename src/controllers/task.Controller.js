@@ -3,13 +3,14 @@ const asyncHandler = require("../middleware/asyncHandler");
 const users = require("../models/users");
 const Task = require("../models/task");
 const TaskFiles = require("../models/taskFiles");
+const Blog = require("../models/blog");
 exports.createTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { groupid, title, description, starttime, endtime } = req.body;
 
   const new_task = await Task.create({
-    userid,
     groupid,
+    userid,
     title,
     description,
     starttime,
@@ -30,18 +31,22 @@ exports.createTask = asyncHandler(async (req, res, next) => {
 });
 
 exports.createTaskFile = asyncHandler(async (req, res, next) => {
-  const { taskid, file } = req.body
-  if (file) {
-    const new_file = await TaskFiles.create({
-      taskid: taskid,
-      filename: file.name,
-      filesize: file.size,
-      filelink: file.link
-    });
+  const { taskid, files } = req.body
+  if (files) {
+    const new_files = await Promise.all(
+      files.map((item) => (
+        TaskFiles.create({
+          taskid: taskid,
+          filename: file.name,
+          filesize: file.size,
+          filelink: file.link
+        })
+      ))
+    );
     return res.status(200).json({
       success: true,
-      message: "Created New Task File",
-      data: new_file.dataValues
+      message: "Created New Task Files",
+      data: new_files.dataValues
     });
   } else
     return res.status(400).json({
@@ -60,7 +65,106 @@ exports.getTasks = asyncHandler(async (req, res, next) => {
       order: [["id", "DESC"]],
     })
   return res.status(200).json({
+    success: true,
     data: taskList,
-    message: "Blog list",
+    message: "Task list",
   });
 });
+
+exports.getTask = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  const { taskid } = req.params;
+
+  const task = await Task.findOne({
+    where: {
+      id: taskid
+    }
+  });
+
+  const blogs = await Blog.findAll({
+    where: {
+      taskid : taskid
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Task",
+    data: task,
+  });
+});
+
+exports.editTask = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  const { taskid } = req.params;
+  const { title, description, starttime, endtime, files } = req.body;
+
+  const task = await Task.update({
+    title: title,
+    description: description,
+    starttime: starttime,
+    endtime: endtime
+  }, {
+    where: {
+      id: taskid
+    }
+  });
+
+  await TaskFiles.destroy({
+    where: {
+      taskid: taskid
+    }
+  });
+
+  const taskFiles = await Promise.all(
+    files.map((item) => (
+      TaskFiles.create({
+        taskid: taskid,
+        filename: item.name,
+        filesize: item.size,
+        filelink: item.link
+      })
+    ))
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Task updated",
+  });
+});
+
+exports.deleteTask = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  const { taskid } = req.params;
+
+  const task = await Task.destroy({
+    where: {
+      id: taskid
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Task deleted",
+  });
+});
+
+exports.gradeBlog = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  const { taskid } = req.params;
+  const { blogid, grade } = req.body;
+
+  const blog = Blog.update({
+    grade: grade
+  }, {
+    where: {
+      id: blogid,
+      taskid: taskid
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Blog graded",
+  });
+})

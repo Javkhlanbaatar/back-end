@@ -2,6 +2,7 @@ const { DataTypes, Model } = require("sequelize");
 const db = require("../services/database");
 const moment = require('moment');
 const Group = require('./group');
+const Users = require("./users");
 
 class Task extends Model {}
 
@@ -16,6 +17,13 @@ Task.init(
       type: DataTypes.INTEGER,
       references: {
         model: Group,
+        key: 'id'
+      },
+    },
+    userid: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Users,
         key: 'id'
       },
     },

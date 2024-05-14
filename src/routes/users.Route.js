@@ -5,7 +5,7 @@ const router = require("express").Router();
 router.route("/").post(createUser);
 router.route("/").get(extractToken, loggedIn, getUsers);
 router.route("/profile").get(extractToken, loggedIn, getUserProfile);
-router.route("/find").get(extractToken, loggedIn, findUser);
+router.route("/find").post(extractToken, loggedIn, findUser);
 router.route("/:username").get(extractToken, getUser);
 router.route("/:id").delete(extractToken, loggedIn, deleteUser);
 router.route("/:id").put(extractToken, loggedIn, updateUser);

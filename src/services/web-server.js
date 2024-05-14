@@ -29,6 +29,7 @@ function initialize() {
   );
   app.use(
     express.urlencoded({
+      extended: true,
       limit: "50mb",
     })
   );
@@ -67,12 +68,12 @@ function initialize() {
       GroupMember.sync();
       Task.sync().then(() => {
         TaskFiles.sync();
+        Blog.sync().then(() => {
+          BlogPoster.sync();
+          BlogFiles.sync();
+          BlogLikes.sync();
+        });
       });
-    });
-    Blog.sync().then(() => {
-      BlogPoster.sync();
-      BlogFiles.sync();
-      BlogLikes.sync();
     });
   });
 
