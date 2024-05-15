@@ -4,6 +4,8 @@ const users = require("../models/users");
 const Task = require("../models/task");
 const TaskFiles = require("../models/taskFiles");
 const Blog = require("../models/blog");
+const GroupMember = require("../models/groupMember");
+const Users = require("../models/users");
 exports.createTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { groupid, title, description, starttime, endtime } = req.body;
@@ -14,56 +16,55 @@ exports.createTask = asyncHandler(async (req, res, next) => {
     title,
     description,
     starttime,
-    endtime
+    endtime,
   });
   if (!new_task) {
     return req.status(400).json({
       succes: false,
-      message: "Failed to create new task"
+      message: "Failed to create new task",
     });
   }
 
   return res.status(200).json({
     success: true,
     message: "Created new task",
-    data: new_task.dataValues
+    data: new_task.dataValues,
   });
 });
 
 exports.createTaskFile = asyncHandler(async (req, res, next) => {
-  const { taskid, files } = req.body
+  const { taskid, files } = req.body;
   if (files) {
     const new_files = await Promise.all(
-      files.map((item) => (
+      files.map((item) =>
         TaskFiles.create({
           taskid: taskid,
           filename: file.name,
           filesize: file.size,
-          filelink: file.link
+          filelink: file.link,
         })
-      ))
+      )
     );
     return res.status(200).json({
       success: true,
       message: "Created New Task Files",
-      data: new_files.dataValues
+      data: new_files.dataValues,
     });
   } else
     return res.status(400).json({
       success: false,
-      message: "File is empty"
+      message: "File is empty",
     });
 });
 
 exports.getTasks = asyncHandler(async (req, res, next) => {
   const { groupid } = req.groupid;
-  const taskList = await Task
-    .findAll({
-      where: {
-        groupid
-      },
-      order: [["id", "DESC"]],
-    })
+  const taskList = await Task.findAll({
+    where: {
+      groupid,
+    },
+    order: [["id", "DESC"]],
+  });
   return res.status(200).json({
     success: true,
     data: taskList,
@@ -73,59 +74,81 @@ exports.getTasks = asyncHandler(async (req, res, next) => {
 
 exports.getTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const { taskid } = req.params;
+  const taskid = req.params.id;
 
   const task = await Task.findOne({
     where: {
-      id: taskid
-    }
+      id: taskid,
+    },
   });
+  console.log(taskid);
 
   const blogs = await Blog.findAll({
     where: {
-      taskid : taskid
-    }
+      taskid: taskid,
+    },
+  });
+  task.blogs = blogs;
+
+  const adminMember = await GroupMember.findAll({
+    where: {
+      groupid: task.groupid,
+      role: 1,
+    },
+  });
+  const admin = await Users.findAll({
+    where: {
+      id: adminMember.map((item) => item.userid),
+    },
   });
 
   return res.status(200).json({
     success: true,
     message: "Task",
-    data: task,
+    data: {
+      task: task,
+      admin: admin,
+    },
   });
 });
 
 exports.editTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const { taskid } = req.params;
+  const taskid = req.params.id;
   const { title, description, starttime, endtime, files } = req.body;
 
-  const task = await Task.update({
-    title: title,
-    description: description,
-    starttime: starttime,
-    endtime: endtime
-  }, {
-    where: {
-      id: taskid
+  const task = await Task.update(
+    {
+      title: title,
+      description: description,
+      starttime: starttime,
+      endtime: endtime,
+    },
+    {
+      where: {
+        id: taskid,
+      },
     }
-  });
+  );
 
   await TaskFiles.destroy({
     where: {
-      taskid: taskid
-    }
+      taskid: taskid,
+    },
   });
 
-  const taskFiles = await Promise.all(
-    files.map((item) => (
-      TaskFiles.create({
-        taskid: taskid,
-        filename: item.name,
-        filesize: item.size,
-        filelink: item.link
-      })
-    ))
-  );
+  if (files) {
+    const taskFiles = await Promise.all(
+      files.map((item) =>
+        TaskFiles.create({
+          taskid: taskid,
+          filename: item.name,
+          filesize: item.size,
+          filelink: item.link,
+        })
+      )
+    );
+  }
 
   return res.status(200).json({
     success: true,
@@ -139,8 +162,8 @@ exports.deleteTask = asyncHandler(async (req, res, next) => {
 
   const task = await Task.destroy({
     where: {
-      id: taskid
-    }
+      id: taskid,
+    },
   });
 
   return res.status(200).json({
@@ -154,17 +177,20 @@ exports.gradeBlog = asyncHandler(async (req, res, next) => {
   const { taskid } = req.params;
   const { blogid, grade } = req.body;
 
-  const blog = Blog.update({
-    grade: grade
-  }, {
-    where: {
-      id: blogid,
-      taskid: taskid
+  const blog = Blog.update(
+    {
+      grade: grade,
+    },
+    {
+      where: {
+        id: blogid,
+        taskid: taskid,
+      },
     }
-  });
+  );
 
   return res.status(200).json({
     success: true,
     message: "Blog graded",
   });
-})
+});
