@@ -133,6 +133,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
 
 const userDetails = async (id) => {
   const user = await users.findOne({
+    attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
     where: {
       id: id,
     },
@@ -339,11 +340,15 @@ exports.findUser = asyncHandler(async (req, res, next) => {
   const { name } = req.body;
   const [firstname, lastname] = name.split(" ");
   const existingUsers = await users.findAll({
+    attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
     where: {
       [Op.or]: [
         lastname
-          ? { firstname: {[Op.like]: `${firstname}%`}, lastname: {[Op.like]: `${lastname}%`} }
-          : { firstname: {[Op.like]: `${firstname}%`} },
+          ? {
+              firstname: { [Op.like]: `${firstname}%` },
+              lastname: { [Op.like]: `${lastname}%` },
+            }
+          : { firstname: { [Op.like]: `${firstname}%` } },
       ],
     },
   });

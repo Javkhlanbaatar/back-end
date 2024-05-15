@@ -99,6 +99,7 @@ exports.getTask = asyncHandler(async (req, res, next) => {
     },
   });
   const admin = await Users.findAll({
+    attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
     where: {
       id: adminMember.map((item) => item.userid),
     },

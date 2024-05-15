@@ -228,6 +228,7 @@ exports.getGroup = asyncHandler(async (req, res, next) => {
   const memberList = [];
   for (let i in groupMembers) {
     const user = await users.findOne({
+      attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
       where: {
         id: groupMembers[i].userid,
       },

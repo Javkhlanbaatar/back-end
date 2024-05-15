@@ -174,6 +174,7 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
     blogList.map(async (blog) => {
       const [user, poster, likedBlog] = await Promise.all([
         users.findOne({
+          attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
           where: {
             id: blog.userid,
           },
@@ -216,6 +217,7 @@ exports.getUnassignedBlogs = asyncHandler(async (req, res, next) => {
     blogList.map(async (blog) => {
       const [user, poster] = await Promise.all([
         users.findOne({
+          attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
           where: {
             id: blog.userid,
           },
@@ -257,6 +259,7 @@ exports.getBlog = asyncHandler(async (req, res, next) => {
   }
 
   const blog_user = await users.findOne({
+    attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
     where: {
       id: blog_blog.userid,
     },
@@ -340,31 +343,57 @@ exports.findBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
 
   const { title } = req.body;
-  const foundBlog = await Blog.findOne({
+  const friends = await Friend.findAll({
     where: {
-      title: title,
+      userid: userid,
+      accepted: true,
     },
   });
-  if (!foundBlog)
-    return res.status(404).json({
-      message: "Blog not found",
-      success: False,
-    });
-  const user = await users.findOne({
+  const friendsId = friends.map((friend) => friend.friendid);
+  const blogList = await Blog.findAll({
     where: {
-      id: foundBlog.userid,
+      title: { [Op.like]: `${title}%` },
+      [Op.or]: [
+        {
+          privacy: 0,
+        },
+        {
+          privacy: 1,
+          userid: friendsId,
+        },
+        {
+          privacy: [1, 2],
+          userid: userid,
+        },
+      ],
     },
   });
-  const shortFoundBlog = {
-    title: foundBlog.title,
-    user: user,
-    description: foundBlog.description,
-    likeCount: foundBlog.likeCount,
-    date: foundBlog.createdAt,
-  };
+  const blogs = await Promise.all(
+    blogList.map(async (blog) => {
+      const [user, poster] = await Promise.all([
+        users.findOne({
+          attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
+          where: {
+            id: blog.userid,
+          },
+        }),
+        BlogPoster.findOne({
+          where: {
+            blogid: blog.id,
+          },
+        }),
+      ]);
+      return {
+        ...blog,
+        user: user,
+        poster,
+      };
+    })
+  );
   return res.status(200).json({
     success: true,
-    data: shortFoundBlog,
+    message: "Blog search",
+    data: blogs,
   });
 });
 

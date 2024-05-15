@@ -21,6 +21,7 @@ exports.getFriends = asyncHandler(async (req, res, next) => {
   const friends = [
     friendsId.map((item) =>
       Users.findOne({
+        attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
         where: {
           userid: item.friendid,
         },
