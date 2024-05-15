@@ -158,7 +158,7 @@ exports.editTask = asyncHandler(async (req, res, next) => {
 
 exports.deleteTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const { taskid } = req.params;
+  const taskid = req.params.id;
 
   const task = await Task.destroy({
     where: {
@@ -172,9 +172,31 @@ exports.deleteTask = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.assignBlog = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  const taskid = req.params.id;
+  const { blogid } = req.body;
+
+  const blog = Blog.update(
+    {
+      taskid: taskid
+    },
+    {
+      where: {
+        id: blogid,
+      },
+    }
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Blog assigned",
+  });
+});
+
 exports.gradeBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
-  const { taskid } = req.params;
+  const taskid = req.params.id;
   const { blogid, grade } = req.body;
 
   const blog = Blog.update(
