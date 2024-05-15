@@ -204,6 +204,41 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.getUnassignedBlogs = asyncHandler(async (req, res, next) => {
+  const ownId = req.userid;
+  const blogList = await Blog.findAll({
+    order: [["id", "DESC"]],
+    where: {
+      userid: ownId,
+    },
+  });
+  const blogs = await Promise.all(
+    blogList.map(async (blog) => {
+      const [user, poster] = await Promise.all([
+        users.findOne({
+          where: {
+            id: blog.userid,
+          },
+        }),
+        BlogPoster.findOne({
+          where: {
+            blogid: blog.id,
+          },
+        }),
+      ]);
+      return {
+        ...blog,
+        user: user,
+        poster,
+      };
+    })
+  );
+  return res.status(200).json({
+    data: blogs,
+    message: "Blog list",
+  });
+});
+
 exports.getBlog = asyncHandler(async (req, res, next) => {
   const ownId = req.userid;
   const id = req.params.id;

@@ -75,20 +75,22 @@ exports.getTasks = asyncHandler(async (req, res, next) => {
 exports.getTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const taskid = req.params.id;
+  const { short } = req.query;
 
   const task = await Task.findOne({
     where: {
       id: taskid,
     },
   });
-  console.log(taskid);
 
-  const blogs = await Blog.findAll({
-    where: {
-      taskid: taskid,
-    },
-  });
-  task.blogs = blogs;
+  if (!short) {
+    const blogs = await Blog.findAll({
+      where: {
+        taskid: taskid,
+      },
+    });
+    task.blogs = blogs;
+  }
 
   const adminMember = await GroupMember.findAll({
     where: {
@@ -177,12 +179,25 @@ exports.assignBlog = asyncHandler(async (req, res, next) => {
   const taskid = req.params.id;
   const { blogid } = req.body;
 
-  const blog = Blog.update(
+  await Blog.update(
     {
-      taskid: taskid
+      taskid: null,
     },
     {
       where: {
+        userid: userid,
+        taskid: taskid,
+      },
+    }
+  );
+
+  await Blog.update(
+    {
+      taskid: taskid,
+    },
+    {
+      where: {
+        userid: userid,
         id: blogid,
       },
     }
@@ -199,7 +214,7 @@ exports.gradeBlog = asyncHandler(async (req, res, next) => {
   const taskid = req.params.id;
   const { blogid, grade } = req.body;
 
-  const blog = Blog.update(
+  const blog = await Blog.update(
     {
       grade: grade,
     },
