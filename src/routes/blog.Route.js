@@ -7,7 +7,7 @@ router.route("/poster").post(extractToken, loggedIn, changeBlogPoster);
 router.route("/file").post(extractToken, loggedIn, changeBlogFile);
 router.route("/find").post(extractToken, loggedIn, findBlog);
 router.route("/").get(extractToken, getBlogs);
-router.route("/unassigned").get(extractToken, getUnassignedBlogs);
+router.route("/unassigned").get(extractToken, loggedIn, getUnassignedBlogs);
 router.route("/:id").get(extractToken, getBlog);
 router.route("/:id").delete(extractToken, loggedIn, deleteBlog);
 router.route("/:id").put(extractToken, loggedIn,  editBlog);

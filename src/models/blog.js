@@ -20,13 +20,6 @@ Blog.init(
         key: 'id'
       },
     },
-    taskid: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: Task,
-        key: 'id'
-      },
-    },
     title: {
       type: DataTypes.STRING,
     },
@@ -37,9 +30,6 @@ Blog.init(
       type: DataTypes.INTEGER,
     },
     likeCount: {
-      type: DataTypes.INTEGER
-    },
-    grade: {
       type: DataTypes.INTEGER
     },
     createdAt: {
@@ -64,12 +54,6 @@ Blog.init(
 
 Blog.belongsTo(Users, {
   foreignKey: 'userid',
-  targetKey: 'id',
-  onDelete: 'CASCADE',
-  onUpdate: 'CASCADE',
-});
-Blog.belongsTo(Task, {
-  foreignKey: 'taskid',
   targetKey: 'id',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE',

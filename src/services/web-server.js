@@ -17,6 +17,7 @@ const BlogPoster = require("../models/blogPoster");
 const GroupPoster = require("../models/groupPoster");
 const TaskFiles = require("../models/taskFiles");
 const BlogLikes = require("../models/blogLikes");
+const TaskAssignment = require("../models/taskAssignment");
 
 // const scheduler = require("./scheduler"); // устгаж болохгүй!!!
 function initialize() {
@@ -72,6 +73,7 @@ function initialize() {
           BlogPoster.sync();
           BlogFiles.sync();
           BlogLikes.sync();
+          TaskAssignment.sync();
         });
       });
     });

@@ -6,6 +6,7 @@ const BlogLikes = require("../models/blogLikes");
 const Blog = require("../models/blog");
 const { Op } = require("sequelize");
 const Friend = require("../models/friend");
+const TaskAssignment = require("../models/taskAssignment");
 
 exports.createBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
@@ -174,7 +175,9 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
     blogList.map(async (blog) => {
       const [user, poster, likedBlog] = await Promise.all([
         users.findOne({
-          attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
+          attributes: {
+            exclude: ["role", "password", "createdAt", "updatedAt"],
+          },
           where: {
             id: blog.userid,
           },
@@ -207,17 +210,31 @@ exports.getBlogs = asyncHandler(async (req, res, next) => {
 
 exports.getUnassignedBlogs = asyncHandler(async (req, res, next) => {
   const ownId = req.userid;
+  const taskid = req.query.taskid;
+  const assignments = await TaskAssignment.findAll({
+    where: {
+      taskid: taskid,
+    },
+  });
+  const assignedBlog = await Blog.findOne({
+    where: {
+      id: assignments.map((item) => item.blogid),
+      userid: ownId,
+    },
+  });
   const blogList = await Blog.findAll({
-    order: [["id", "DESC"]],
     where: {
       userid: ownId,
     },
   });
+
   const blogs = await Promise.all(
     blogList.map(async (blog) => {
       const [user, poster] = await Promise.all([
         users.findOne({
-          attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
+          attributes: {
+            exclude: ["role", "password", "createdAt", "updatedAt"],
+          },
           where: {
             id: blog.userid,
           },
@@ -231,6 +248,7 @@ exports.getUnassignedBlogs = asyncHandler(async (req, res, next) => {
       return {
         ...blog,
         user: user,
+        assigned: blog.id === assignedBlog?.id,
         poster,
       };
     })
@@ -372,7 +390,9 @@ exports.findBlog = asyncHandler(async (req, res, next) => {
     blogList.map(async (blog) => {
       const [user, poster] = await Promise.all([
         users.findOne({
-          attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
+          attributes: {
+            exclude: ["role", "password", "createdAt", "updatedAt"],
+          },
           where: {
             id: blog.userid,
           },

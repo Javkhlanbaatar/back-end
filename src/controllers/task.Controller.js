@@ -6,6 +6,8 @@ const TaskFiles = require("../models/taskFiles");
 const Blog = require("../models/blog");
 const GroupMember = require("../models/groupMember");
 const Users = require("../models/users");
+const BlogPoster = require("../models/blogPoster");
+const TaskAssignment = require("../models/taskAssignment");
 exports.createTask = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const { groupid, title, description, starttime, endtime } = req.body;
@@ -175,34 +177,130 @@ exports.deleteTask = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.getAssignedBlog = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
+  const taskid = req.params.id;
+
+  const task = await Task.findOne({
+    where: {
+      id: taskid,
+    },
+  });
+  const admin = await GroupMember.findOne({
+    where: {
+      userid: userid,
+      groupid: task.groupid,
+      role: 1,
+    },
+  });
+  if (!admin)
+    return res.status(400).json({
+      success: false,
+      message: "Not admin",
+    });
+
+  const assignments = await TaskAssignment.findAll({
+    where: {
+      taskid: taskid,
+    },
+  });
+  const blogList = await Promise.all(
+    assignments.map((item) =>
+      Blog.findOne({
+        where: {
+          id: item.blogid,
+        },
+      })
+    )
+  );
+
+  const blogs = await Promise.all(
+    blogList.map(async (blog) => {
+      const [user, poster, assign] = await Promise.all([
+        users.findOne({
+          attributes: {
+            exclude: ["role", "password", "createdAt", "updatedAt"],
+          },
+          where: {
+            id: blog.userid,
+          },
+        }),
+        BlogPoster.findOne({
+          where: {
+            blogid: blog.id,
+          },
+        }),
+        TaskAssignment.findOne({
+          where: {
+            blogid: blog.id,
+            taskid: taskid
+          },
+        })
+      ]);
+      return {
+        ...blog,
+        user: user,
+        grade: assign.grade,
+        poster,
+      };
+    })
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: "Assigned blogs",
+    data: blogs,
+  });
+});
+
 exports.assignBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const taskid = req.params.id;
   const { blogid } = req.body;
 
-  await Blog.update(
-    {
-      taskid: null,
+  // Check if on time
+  const task = await Task.findOne({
+    where: {
+      id: taskid,
     },
-    {
-      where: {
-        userid: userid,
-        taskid: taskid,
-      },
-    }
-  );
+  });
+  const now = new Date();
+  if (now < task.starttime) {
+    return res.status(400).json({
+      success: false,
+      message: "Too early",
+    });
+  }
+  if (now > task.endtime) {
+    return res.status(400).json({
+      success: false,
+      message: "Too late",
+    });
+  }
 
-  await Blog.update(
-    {
+  const exists = await TaskAssignment.findOne({
+    where: {
       taskid: taskid,
+      blogid: blogid,
     },
-    {
-      where: {
-        userid: userid,
-        id: blogid,
+  });
+  if (exists) {
+    await TaskAssignment.update(
+      {
+        blogid: blogid,
       },
-    }
-  );
+      {
+        where: {
+          taskid: taskid,
+        },
+      }
+    );
+  } else {
+    await TaskAssignment.create({
+      taskid: taskid,
+      blogid: blogid,
+    });
+  }
 
   return res.status(200).json({
     success: true,
@@ -213,16 +311,34 @@ exports.assignBlog = asyncHandler(async (req, res, next) => {
 exports.gradeBlog = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const taskid = req.params.id;
-  const { blogid, grade } = req.body;
+  const { blogid, score } = req.body;
 
-  const blog = await Blog.update(
+  const task = await Task.findOne({
+    where: {
+      id: taskid,
+    },
+  });
+  const admin = await GroupMember.findOne({
+    where: {
+      userid: userid,
+      groupid: task.groupid,
+      role: 1,
+    },
+  });
+  if (!admin)
+    return res.status(400).json({
+      success: false,
+      message: "Not admin",
+    });
+
+  await TaskAssignment.update(
     {
-      grade: grade,
+      grade: score,
     },
     {
       where: {
-        id: blogid,
         taskid: taskid,
+        blogid: blogid,
       },
     }
   );
