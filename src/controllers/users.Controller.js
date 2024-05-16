@@ -339,7 +339,7 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 exports.findUser = asyncHandler(async (req, res, next) => {
   const { name } = req.body;
   const [firstname, lastname] = name.split(" ");
-  const existingUsers = await users.findAll({
+  let foundUsers = await users.findAll({
     attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
     where: {
       [Op.or]: [
@@ -352,9 +352,20 @@ exports.findUser = asyncHandler(async (req, res, next) => {
       ],
     },
   });
+  foundUsers = await Promise.all(
+    foundUsers.map(async (user) => {
+      const profile = await UserProfile.findOne({
+        where: {
+          userid: user.id,
+        },
+      });
+      user.profile = profile;
+      return user;
+    })
+  );
 
   return res.status(200).json({
     success: true,
-    data: existingUsers,
+    data: foundUsers,
   });
 });
