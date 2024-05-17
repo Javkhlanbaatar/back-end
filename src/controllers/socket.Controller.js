@@ -126,7 +126,7 @@ exports.writedm = asyncHandler(async (io, data) => {
   const chat = await chatMessage.create({
     sender_id: sender,
     recipient_id: receipt,
-    content: cont,
+    content: cont.slice(0, 255),
   });
   if (chat) console.log("created chat backup");
 

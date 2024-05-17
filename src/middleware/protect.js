@@ -13,7 +13,7 @@ exports.extractToken = asyncHandler(async (req, res, next) => {
   }
   const token = req.headers.authorization?.split(" ")[1];
   //request-н header хэсгээс bearer токен авах
-  if (!token || token == "undefined") {
+  if (!token || token == "undefined" || token == "null") {
     req.userid = "";
     req.email = "";
     req.username = "";
