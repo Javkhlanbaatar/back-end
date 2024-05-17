@@ -2,6 +2,7 @@ const http = require("http");
 const socketIO = require("socket.io");
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const {
   writeAllChat,
   getAllChat,
@@ -25,16 +26,32 @@ let onlineUsers = [];
 async function initialize() {
   console.log("Connecting to chatting server");
 
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) {
+      return next(new Error("invalid token"));
+    }
+    jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.decode(token, { complete: true });
+    socket.userid = decoded.payload.userid;
+    next();
+  });
+
   io.on("connection", (socket) => {
     console.log("chatting server is online...");
-    // console.log(connectedUsers);
+    userSockets[socket.userid] = socket;
+
     // Listen for the login event to receive the username from the client
-    socket.on("Login", (data) => {
+    socket.on("login", (data) => {
       console.log(`${data.username} has connected`);
       // Store the ssocket with the username in the object
       connectedUsers++;
-      onlineUsers.push(data.id);
+      onlineUsers.push(data.userid);
       socket.emit("onlineUsers", onlineUsers);
+    });
+
+    socket.on("to", (data) => {
+      
     });
 
     socket.on("all chat", (data) => {
@@ -44,7 +61,7 @@ async function initialize() {
     });
 
     socket.on("dm", (data) => {
-      writedm(io, data);
+      writedm([userSockets[data.sender], userSockets[data.receipt]], data);
       // console.log("message sent: " + data.reciept + " from: " + data.username);
     });
 

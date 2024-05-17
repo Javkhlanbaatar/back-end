@@ -117,7 +117,7 @@ exports.getChats = asyncHandler(async (req, res, next) => {
 });
 
 //for save chat
-exports.writedm = asyncHandler(async (io, data) => {
+exports.writedm = asyncHandler(async (sockets, data) => {
   const cont = data.content;
   const sender = data.sender;
   const receipt = data.receipt;
@@ -130,7 +130,9 @@ exports.writedm = asyncHandler(async (io, data) => {
   });
   if (chat) console.log("created chat backup");
 
-  io.emit("display dm", chat);
+  sockets.map((socket) => {
+    if (socket) socket.emit("display dm", chat);
+  })
 });
 
 exports.setAllChatReadStatus = asyncHandler(async (req, res) => {
