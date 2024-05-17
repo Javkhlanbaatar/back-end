@@ -58,6 +58,7 @@ exports.Login = asyncHandler(async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Амжилттай нэвтэрлээ",
+      username: user.username,
       userid: user.id,
       token,
     });
