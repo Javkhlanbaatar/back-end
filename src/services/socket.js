@@ -1,8 +1,12 @@
 const http = require("http");
 const socketIO = require("socket.io");
 const express = require("express");
-const cors = require('cors');
-const { writeAllChat, getAllChat,writedm } = require("../controllers/socket.Controller");
+const cors = require("cors");
+const {
+  writeAllChat,
+  getAllChat,
+  writedm,
+} = require("../controllers/socket.Controller");
 
 const app = express();
 
@@ -11,8 +15,8 @@ const io = socketIO(server, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 
 let connectedUsers = 0;
@@ -30,50 +34,50 @@ async function initialize() {
       // Store the ssocket with the username in the object
       connectedUsers++;
       onlineUsers.push(data.id);
-      socket.emit('onlineUsers',onlineUsers);
+      socket.emit("onlineUsers", onlineUsers);
     });
-    
-    socket.on('all chat', (data) => {
+
+    socket.on("all chat", (data) => {
       writeAllChat(io, data);
       console.log(connectedUsers);
       // console.log("message sent: " + data.reciept + " from: " + data.username);
     });
 
-    socket.on('dm', (data) => {
+    socket.on("dm", (data) => {
       writedm(io, data);
       // console.log("message sent: " + data.reciept + " from: " + data.username);
     });
 
-    socket.on('display all chat', (userid) => {
+    socket.on("display all chat", (userid) => {
       getAllChat(io, userid);
     });
 
     socket.on("close", (data) => {
       console.log(`${data.username}'s disconnected`);
       connectedUsers--;
-    
+
       if (data.id !== -1) {
         // Use the filter method to remove all elements equal to data.id from the onlineUsers array
         onlineUsers = onlineUsers.filter((userId) => userId !== data.id);
       }
-    
-      socket.emit('onlineUsers', onlineUsers);
+
+      socket.emit("onlineUsers", onlineUsers);
     });
-    
-    
   });
 
   server.listen(process.env.SOCKET_PORT, () => {
-    console.log(`Socket.IO server listening on port ${process.env.SOCKET_PORT}`);
+    console.log(
+      `Socket.IO server listening on port ${process.env.SOCKET_PORT}`
+    );
   });
 
   // Listen for SIGINT (Ctrl+C) and SIGUSR2 (used by Nodemon) signals and disconnect all sockets
-  process.on('SIGINT', disconnectSockets);
-  process.on('SIGUSR2', disconnectSockets);
+  process.on("SIGINT", disconnectSockets);
+  process.on("SIGUSR2", disconnectSockets);
 }
 
 function disconnectSockets() {
-  Object.values(userSockets).forEach(socket => socket.disconnect());
+  Object.values(userSockets).forEach((socket) => socket.disconnect());
   process.exit(); // Exit the process after all sockets are disconnected
 }
 
