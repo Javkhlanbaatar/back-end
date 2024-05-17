@@ -31,9 +31,13 @@ async function initialize() {
     if (!token) {
       return next(new Error("invalid token"));
     }
-    jwt.verify(token, process.env.JWT_SECRET);
-    const decoded = jwt.decode(token, { complete: true });
-    socket.userid = decoded.payload.userid;
+    try {
+      jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.decode(token, { complete: true });
+      socket.userid = decoded.payload.userid;
+    } catch (err) {
+      return;
+    }
     next();
   });
 
@@ -50,9 +54,7 @@ async function initialize() {
       socket.emit("onlineUsers", onlineUsers);
     });
 
-    socket.on("to", (data) => {
-      
-    });
+    socket.on("to", (data) => {});
 
     socket.on("all chat", (data) => {
       writeAllChat(io, data);
