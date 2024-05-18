@@ -26,7 +26,7 @@ BlogPoster.init(
       type: DataTypes.INTEGER
     },
     filelink: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(511)
     },
     createdAt: {
       type: DataTypes.DATE,

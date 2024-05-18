@@ -89,46 +89,61 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   const page = req.query.page;
   const perPage = req.query.perPage;
 
-  const exists = await users.findOne({
-    where: {
-      username: username,
-    },
-  });
-
-  if (!exists) {
-    return res.status(404).json({
+  if (!username) {
+    return res.status(400).json({
       success: false,
-      message: "User not found",
+      message: "Username is empty",
     });
   }
 
-  const friend = await Friend.findOne({
-    where: {
-      userid: userid,
-      friendid: exists.id,
-      accepted: true,
-    },
-  });
+  try {
+    const exists = await users.findOne({
+      where: {
+        username: username,
+      },
+    });
 
-  let who = "";
-  if (userid === exists.id) who = "owner";
-  else if (friend) who = "friend";
+    if (!exists) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-  const [user, all_blogs, friends] = await Promise.all([
-    userDetails(exists.id),
-    userBlogs(exists.id, who, page, perPage),
-    userFriends(exists.id),
-  ]);
+    const friend = await Friend.findOne({
+      where: {
+        userid: userid,
+        friendid: exists.id,
+        accepted: true,
+      },
+    });
 
-  return res.status(200).json({
-    success: true,
-    data: {
-      ...user,
-      friend: friend ? true : false,
-      friends: friends,
-      blogs: all_blogs,
-    },
-  });
+    let who = "";
+    if (userid === exists.id) who = "owner";
+    else if (friend) who = "friend";
+
+    const [user, all_blogs, friends] = await Promise.all([
+      userDetails(exists.id),
+      userBlogs(exists.id, who, page, perPage),
+      userFriends(exists.id),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...user,
+        friend: friend ? true : false,
+        friends: friends,
+        blogs: all_blogs,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "System error",
+    });
+  }
 });
 
 const userDetails = async (id) => {
@@ -244,16 +259,24 @@ const userFriends = async (id) => {
 exports.getUserProfile = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
 
-  const userProfile = await UserProfile.findOne({
-    where: {
-      userid: userid,
-    },
-  });
+  try {
+    const userProfile = await UserProfile.findOne({
+      where: {
+        userid: userid,
+      },
+    });
 
-  return res.status(200).json({
-    success: true,
-    data: userProfile,
-  });
+    return res.status(200).json({
+      success: true,
+      data: userProfile,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "System error",
+    });
+  }
 });
 
 exports.updateUser = asyncHandler(async (req, res, next) => {
@@ -268,36 +291,38 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const updatedUser = {
-    firstname,
-    lastname,
-    email,
-    phonenumber,
-  };
-  await users.update(updatedUser, {
-    where: {
-      id: id,
-    },
-  });
-  if (profile) {
-    await UserProfile.update(
-      {
-        filename: profile.name,
-        filesize: profile.size,
-        filelink: profile.link,
+  try {
+    await users.update(firstname, lastname, email, phonenumber, {
+      where: {
+        id: id,
       },
-      {
-        where: {
-          userid: id,
+    });
+    if (profile) {
+      await UserProfile.update(
+        {
+          filename: profile.name,
+          filesize: profile.size,
+          filelink: profile.link,
         },
-      }
-    );
+        {
+          where: {
+            userid: id,
+          },
+        }
+      );
+    }
+  
+    return res.status(200).json({
+      success: true,
+      message: "User info edited",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "System error",
+    });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: "User info edited",
-  });
 });
 
 exports.deleteUser = asyncHandler(async (req, res, next) => {
@@ -311,61 +336,86 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const user = await users.findOne({
-    where: {
-      id: id,
-    },
-  });
-
-  if (!user) {
-    return res.status(404).json({
+  try {
+    const user = await users.findOne({
+      where: {
+        id: id,
+      },
+    });
+  
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User doesn't exist",
+      });
+    }
+  
+    await users.destroy({
+      where: {
+        id: id,
+      },
+    });
+  
+    return res.status(200).json({
+      success: true,
+      message: "User removed successfully!",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
       success: false,
-      message: "User doesn't exist",
+      message: "System error",
     });
   }
-
-  await users.destroy({
-    where: {
-      id: id,
-    },
-  });
-
-  return res.status(200).json({
-    success: false,
-    message: "User removed successfully!",
-  });
 });
 
 exports.findUser = asyncHandler(async (req, res, next) => {
   const { name } = req.body;
-  const [firstname, lastname] = name.split(" ");
-  let foundUsers = await users.findAll({
-    attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
-    where: {
-      [Op.or]: [
-        lastname
-          ? {
-              firstname: { [Op.like]: `${firstname}%` },
-              lastname: { [Op.like]: `${lastname}%` },
-            }
-          : { firstname: { [Op.like]: `${firstname}%` } },
-      ],
-    },
-  });
-  foundUsers = await Promise.all(
-    foundUsers.map(async (user) => {
-      const profile = await UserProfile.findOne({
-        where: {
-          userid: user.id,
-        },
-      });
-      user.profile = profile;
-      return user;
-    })
-  );
 
-  return res.status(200).json({
-    success: true,
-    data: foundUsers,
-  });
+  if (!name) {
+    return res.status(400).json({
+      success: false,
+      message: "Empty search",
+    });
+  }
+
+  const [firstname, lastname] = name.split(" ");
+
+  try {
+    let foundUsers = await users.findAll({
+      attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
+      where: {
+        [Op.or]: [
+          lastname
+            ? {
+                firstname: { [Op.like]: `${firstname}%` },
+                lastname: { [Op.like]: `${lastname}%` },
+              }
+            : { firstname: { [Op.like]: `${firstname}%` } },
+        ],
+      },
+    });
+    foundUsers = await Promise.all(
+      foundUsers.map(async (user) => {
+        const profile = await UserProfile.findOne({
+          where: {
+            userid: user.id,
+          },
+        });
+        user.profile = profile;
+        return user;
+      })
+    );
+  
+    return res.status(200).json({
+      success: true,
+      data: foundUsers,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "System error"
+    });
+  }
 });

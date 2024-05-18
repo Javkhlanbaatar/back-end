@@ -5,7 +5,6 @@ const asyncHandler = require("../middleware/asyncHandler");
 const Users = require("../models/users");
 // const io = require('socket.io');
 
-
 exports.Login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -18,13 +17,10 @@ exports.Login = asyncHandler(async (req, res, next) => {
 
   const user = await Users.findOne({
     where: {
-      [Op.or]: [
-        { email: email },
-        { username: email },
-      ],
+      [Op.or]: [{ email: email }, { username: email }],
     },
   });
-  
+
   if (!user) {
     return res.status(500).json({
       success: false,
@@ -82,9 +78,7 @@ exports.checkAuth = asyncHandler(async (req, res, next) => {
 
   const user = await Users.findOne({
     where: {
-      [Op.or]: [
-        { username: username },
-      ],
+      [Op.or]: [{ username: username }],
     },
   });
 
@@ -115,7 +109,8 @@ exports.adminLogin = asyncHandler(async (req, res, next) => {
     where: {
       email: email,
     },
-  }).then((result) => {
+  })
+    .then((result) => {
       //console.log("******", result);
       if (result == null) {
         res.status(500).json({
@@ -124,9 +119,9 @@ exports.adminLogin = asyncHandler(async (req, res, next) => {
         });
         return;
       }
-      if(result.role === "User"){
+      if (result.role === "User") {
         res.status(500).json({
-          success:false,
+          success: false,
           message: "Бүртгэлтэй админ биш!",
         });
         return;
@@ -186,55 +181,50 @@ exports.adminLogin = asyncHandler(async (req, res, next) => {
     });
 });
 
-exports.changePassword= asyncHandler(async (req, res, next) => {
-  const { oldPass, newPass, newPass2} = req.body;
+exports.changePassword = asyncHandler(async (req, res, next) => {
+  const { oldPass, newPass, newPass2 } = req.body;
   const email = req.email;
-  console.log(email, oldPass, newPass, newPass2);
-  if(newPass !==newPass2) {
+  if (!oldPass) {
     return res.status(400).json({
-      success:false,
-      message:"Passwords don't match"
+      success: false,
+      message: "Bad request",
     });
   }
-  await Users.findOne({
-    where: {
-      email: email
-    },
-  })
-    .then((result) => {
-      //console.log("******", result);
-      console.log("found result: "+result.username);
-      if (result == null) {
-        res.status(500).json({
-          success: false,
-          message: "Бүртгэлгүй байна",
-        });
-        return;
-      }
-      const oldPassword = result.password;
-      const id = result.id;
-      bcrypt.compare(oldPass, oldPassword).then(async (result) => {
-        if (result == true) {
-          console.log("old password matched");
-          //end shine pass davslah yostoi
-          const salt = await bcrypt.genSalt(10);
-          const encryptedPassword = await bcrypt.hash(newPass, salt);
-          let changePass ={};
-        changePass.password = encryptedPassword;
-        console.log("updating password")
-          await Users.update(changePass, { where: { id:id } });
-          res.status(200).json({
-            success: true,
-            message: "Changed password",
-          });
-          return;
-        } else {
-          res.status(400).json({
-            success: false,
-            message: "Old password is wrong",
-          });
-        }
-      });
+  if (newPass !== newPass2) {
+    return res.status(400).json({
+      success: false,
+      message: "Passwords don't match",
     });
-
+  }
+  const user = await Users.findOne({
+    where: {
+      email: email,
+    },
+  });
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "Бүртгэлгүй байна",
+    });
+  }
+  await bcrypt.compare(oldPass, user.password).then(async (match) => {
+    if (!match) {
+      return res.status(400).json({
+        success: false,
+        message: "Old password is wrong",
+      });
+    }
+  });
+  const salt = await bcrypt.genSalt(10);
+  const encryptedPassword = await bcrypt.hash(newPass, salt);
+  await Users.update(
+    {
+      password: encryptedPassword,
+    },
+    { where: { id: user.id } }
+  );
+  return res.status(200).json({
+    success: true,
+    message: "Changed password",
+  });
 });

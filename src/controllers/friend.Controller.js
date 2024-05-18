@@ -5,41 +5,50 @@ const Users = require("../models/users");
 exports.getFriends = asyncHandler(async (req, res, next) => {
   const userid = req.params.id;
 
-  if (!friendId) {
+  if (!userid) {
     return res.status(400).json({
       success: false,
       message: "Id is empty",
     });
   }
 
-  const friendsId = await Friend.findAll({
-    where: {
-      userid,
-    },
-  });
+  try {
+    const friendsId = await Friend.findAll({
+      where: {
+        userid,
+      },
+    });
 
-  const friends = [
-    friendsId.map((item) =>
-      Users.findOne({
-        attributes: { exclude: ["role", "password", "createdAt", "updatedAt"] },
-        where: {
-          userid: item.friendid,
-        },
-      })
-    ),
-  ];
+    const friends = [
+      friendsId.map((item) =>
+        Users.findOne({
+          attributes: {
+            exclude: ["role", "password", "createdAt", "updatedAt"],
+          },
+          where: {
+            userid: item.friendid,
+          },
+        })
+      ),
+    ];
 
-  return res.status(200).json({
-    success: true,
-    message: "Friends",
-    data: friends,
-  });
+    return res.status(200).json({
+      success: true,
+      message: "Friends",
+      data: friends,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "System error",
+    });
+  }
 });
 
 exports.addFriend = asyncHandler(async (req, res, next) => {
   const userid = req.userid;
   const friendId = Number(req.params.id);
-  console.log(friendId);
 
   if (!friendId) {
     return res.status(400).json({
@@ -55,72 +64,80 @@ exports.addFriend = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const friend = await Friend.findOne({
-    where: {
+  try {
+    const friend = await Friend.findOne({
+      where: {
+        userid,
+        friendid: friendId,
+      },
+    });
+
+    if (friend) {
+      return res.status(400).json({
+        success: false,
+        message: "Friend already added",
+      });
+    }
+
+    await Friend.create({
       userid,
       friendid: friendId,
-    },
-  });
+      accepted: false,
+    });
 
-  if (friend) {
-    return res.status(400).json({
+    const accepted = await Friend.findOne({
+      where: {
+        userid: friendId,
+        friendid: userid,
+      },
+    });
+
+    if (accepted) {
+      await Friend.update(
+        {
+          accepted: true,
+        },
+        {
+          where: {
+            userid,
+            friendid: friendId,
+          },
+        }
+      );
+      await Friend.update(
+        {
+          accepted: true,
+        },
+        {
+          where: {
+            userid: friendId,
+            friendid: userid,
+          },
+        }
+      );
+      await Users.increment("friendCount", {
+        where: {
+          id: userid,
+        },
+      });
+      await Users.increment("friendCount", {
+        where: {
+          id: friendId,
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Friend added",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
       success: false,
-      message: "Friend already added",
+      message: "System error",
     });
   }
-
-  await Friend.create({
-    userid,
-    friendid: friendId,
-    accepted: false,
-  });
-
-  const accepted = await Friend.findOne({
-    where: {
-      userid: friendId,
-      friendid: userid,
-    },
-  });
-
-  if (accepted) {
-    await Friend.update(
-      {
-        accepted: true,
-      },
-      {
-        where: {
-          userid,
-          friendid: friendId,
-        },
-      }
-    );
-    await Friend.update(
-      {
-        accepted: true,
-      },
-      {
-        where: {
-          userid: friendId,
-          friendid: userid,
-        },
-      }
-    );
-    await Users.increment("friendCount", {
-      where: {
-        id: userid,
-      },
-    });
-    await Users.increment("friendCount", {
-      where: {
-        id: friendId,
-      },
-    });
-  }
-
-  return res.status(200).json({
-    success: true,
-    message: "Friend added",
-  });
 });
 
 exports.removeFriend = asyncHandler(async (req, res, next) => {
@@ -141,46 +158,54 @@ exports.removeFriend = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const friend = await Friend.findOne({
-    where: {
-      userid,
-      friendid: friendId,
-    },
-  });
-
-  if (!friend) {
-    return res.status(400).json({
+  try {
+    const friend = await Friend.findOne({
+      where: {
+        userid,
+        friendid: friendId,
+      },
+    });
+  
+    if (!friend) {
+      return res.status(400).json({
+        success: false,
+        message: "Not friends",
+      });
+    }
+  
+    await Friend.destroy({
+      where: {
+        userid,
+        friendid: friendId,
+      },
+    });
+    await Friend.destroy({
+      where: {
+        userid: friendId,
+        friendid: userid,
+      },
+    });
+  
+    await Users.decrement("friendCount", {
+      where: {
+        id: userid,
+      },
+    });
+    await Users.decrement("friendCount", {
+      where: {
+        id: friendId,
+      },
+    });
+  
+    return res.status(200).json({
+      success: true,
+      message: "Friend removed",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
       success: false,
-      message: "Not friends",
+      message: "System error",
     });
   }
-
-  await Friend.destroy({
-    where: {
-      userid,
-      friendid: friendId,
-    },
-  });
-  await Friend.destroy({
-    where: {
-      userid: friendId,
-      friendid: userid,
-    },
-  });
-
-  await Users.decrement("friendCount", {
-    where: {
-      id: userid,
-    },
-  });
-  await Users.decrement("friendCount", {
-    where: {
-      id: friendId,
-    },
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: "Friend removed",
-  });
 });

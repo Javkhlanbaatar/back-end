@@ -1,119 +1,40 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const { Op } = require("sequelize");
-const allChat = require("../models/chats");
 const chatMessage = require("../models/chatMessage");
-const users = require("../models/users");
 const sequelize = require("../services/database");
-
-exports.getAllChat = asyncHandler(async (req, res) => {
-  // Add the req and res parameters
-  console.log("displaying all chat");
-  const publicChat = await allChat.findAll({
-    order: [["id", "DESC"]],
-  });
-  for (let i in publicChat) {
-    const user = await users.findOne({
-      where: {
-        id: publicChat[i].sender_id,
-      },
-    });
-    publicChat[i].username = user.username;
-  }
-  res.status(200).json({
-    success: true,
-    data: publicChat,
-  });
-});
-
-exports.writeAllChat = asyncHandler(async (io, data) => {
-  // console.log("--------------"+data.content+"--------------------");
-  // console.log(typeof io.emit === 'function');
-  // console.log("--------------"+data.sender+"--------------------");
-  // console.log("--------------"+data.receipt+"--------------------");
-  const cont = data.content;
-  const sender = data.sender;
-  // const receipt = data.receipt;
-  // if(receipt==="GLOBAL"){
-  console.log("creating global chat");
-  const user = await users.findOne({
-    where: {
-      id: sender,
-    },
-  });
-  const message = await allChat.create({
-    sender_id: sender,
-    content: cont,
-    username: user.username,
-  });
-
-  // const thatMessage = await allChat.findOne({
-  //   where:{
-  //     id:message.id
-  //   }
-  // });
-
-  // thatMessage.username=user.username;
-  // }
-  // Create the chat message in the database
-  // else{
-
-  //   console.log("creating DM chat");
-  //   const message = await chatMessage.create({
-  //     sender_id:sender,
-  //     recipient_id:receipt,
-  //     content:cont
-  //   });s
-  // }
-  // Emit the chat message event to the Socket.IO server
-  // console.log("==============="+message.username)
-  io.emit("display all chat", message);
-
-  // return {
-  //   success: true,
-  //   data: message,
-  // };
-});
-
-exports.getOnlineUsers = asyncHandler(async (req, res, next) => {
-  //write something here to use loggedUsers
-});
-
-exports.getChat = asyncHandler(async (req, res, next) => {
-  const sender = req.userid;
-  const receipt = req.params.userid;
-  console.log("-----------------------" + sender, receipt);
-  const chatHistory = await chatMessage.findOne({
-    order: [["id", "DESC"]],
-    where: {
-      [Op.or]: [
-        { sender_id: sender, recipient_id: receipt },
-        { sender_id: receipt, recipient_id: sender },
-      ],
-    },
-  });
-
-  return res.status(200).json({
-    success: true,
-    data: chatHistory,
-  });
-});
 
 exports.getChats = asyncHandler(async (req, res, next) => {
   const sender = req.userid;
   const receipt = req.params.userid;
-  const chatHistory = await chatMessage.findAll({
-    order: [["id", "ASC"]],
-    where: {
-      [Op.or]: [
-        { sender_id: sender, recipient_id: receipt },
-        { sender_id: receipt, recipient_id: sender },
-      ],
-    },
-  });
-  return res.status(200).json({
-    success: true,
-    data: chatHistory,
-  });
+  
+  if (!receipt) {
+    return res.status(400).json({
+      success: false,
+      message: "Bad request",
+    });
+  }
+
+  try {
+    const chatHistory = await chatMessage.findAll({
+      order: [["id", "ASC"]],
+      where: {
+        [Op.or]: [
+          { sender_id: sender, recipient_id: receipt },
+          { sender_id: receipt, recipient_id: sender },
+        ],
+      },
+    });
+    return res.status(200).json({
+      success: true,
+      data: chatHistory,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "System error",
+    });
+  }
 });
 
 //for save chat
