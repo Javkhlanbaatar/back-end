@@ -292,7 +292,7 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    await users.update(firstname, lastname, email, phonenumber, {
+    await users.update({firstname, lastname, email, phonenumber}, {
       where: {
         id: id,
       },
