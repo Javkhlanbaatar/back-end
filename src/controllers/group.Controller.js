@@ -252,6 +252,7 @@ exports.getGroups = asyncHandler(async (req, res, next) => {
 });
 
 exports.getGroup = asyncHandler(async (req, res, next) => {
+  const userid = req.userid;
   const id = req.params.id;
   if (!id) {
     return res.status(400).json({
@@ -261,11 +262,32 @@ exports.getGroup = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const group_group = await group.findOne({
-      where: {
-        id: id,
-      },
-    });
+    let group_group = null;
+    if (!userid) {
+      group_group = await group.findOne({
+        where: {
+          id: id,
+          status: 0
+        },
+      });
+    } else {
+      const temp = await group.findOne({
+        where: {
+          id: id
+        }
+      });
+      if (temp) {
+        const member = await GroupMember.findOne({
+          where: {
+            groupid: id,
+            userid: userid
+          }
+        });
+        if (member) {
+          group_group = temp;
+        }
+      }
+    }
     if (!group_group) {
       return res.status(404).json({
         success: false,

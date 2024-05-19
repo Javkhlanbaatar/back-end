@@ -5,7 +5,7 @@ const {createGroup, getGroup, getGroups, createPoster, updateGroup, deleteGroup,
 router.route("/").post(extractToken, loggedIn, createGroup);
 router.route("/poster").post(extractToken, loggedIn, createPoster);
 router.route("/").get(extractToken, loggedIn, getGroups);
-router.route("/:id").get(extractToken, loggedIn, getGroup);
+router.route("/:id").get(extractToken, getGroup);
 router.route("/:id").put(extractToken, loggedIn, updateGroup);
 router.route("/:id").delete(extractToken, loggedIn, deleteGroup);
 router.route("/:id/member").post(extractToken, loggedIn, addMember);
